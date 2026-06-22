@@ -1,0 +1,580 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Comb the Hedgehog</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Space+Mono:wght@400;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg0:#0b0c11; --bg1:#15161e;
+    --ink:#e7e3d8; --mute:#8b8a86; --line:#2a2b35;
+    --ember:#ea7613; --core:#a5082e;
+    --ok:#d8d2c2;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;overflow:hidden;background:var(--bg0);color:var(--ink)}
+  #c{position:fixed;inset:0;display:block;touch-action:none}
+  #ui{position:fixed;inset:0;pointer-events:none;display:flex;flex-direction:column;justify-content:space-between}
+  .pad{padding:clamp(14px,3vw,30px)}
+  header h1{
+    font-family:"Fraunces",Georgia,serif;font-weight:600;
+    font-size:clamp(22px,4.4vw,40px);line-height:1.0;margin:0;letter-spacing:-.01em;
+  }
+  header p{
+    font-family:"Inter",system-ui,sans-serif;color:var(--mute);
+    margin:.5em 0 0;max-width:30ch;font-size:clamp(12px,2.4vw,14px);line-height:1.45;
+  }
+  /* instrument readout */
+  #panel{
+    pointer-events:none;align-self:flex-start;margin-top:14px;
+    border:1px solid var(--line);border-radius:12px;
+    background:rgba(14,15,21,.55);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);
+    padding:12px 14px 13px;min-width:210px;
+  }
+  #panel .row{display:flex;align-items:baseline;gap:10px}
+  #swirl{font-family:"Space Mono",monospace;font-weight:700;font-size:clamp(30px,6vw,44px);line-height:1;color:var(--ember)}
+  #swirl small{font-size:.42em;color:var(--mute);font-weight:400;letter-spacing:.08em}
+  .lab{font-family:"Inter",sans-serif;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute)}
+  #sub{font-family:"Space Mono",monospace;font-size:12.5px;color:var(--ink);margin-top:9px}
+  #whyBtn{pointer-events:auto;display:inline-flex;align-items:center;gap:5px;margin-top:10px;
+    padding:0;border:0;background:none;backdrop-filter:none;cursor:pointer;
+    font-family:"Inter",sans-serif;font-size:11.5px;letter-spacing:.02em;color:var(--mute)}
+  #whyBtn:hover{color:var(--ink)}
+  #whyBtn .car{transition:transform .2s ease;font-size:13px;line-height:1}
+  #whyBtn[aria-expanded="true"] .car{transform:rotate(90deg)}
+  #whyBtn:focus-visible{outline:2px solid var(--ember);outline-offset:3px;border-radius:3px}
+  #why{margin-top:9px;max-width:30ch;font-family:"Inter",sans-serif;font-size:12px;
+    line-height:1.5;color:var(--mute);border-top:1px solid var(--line);padding-top:9px}
+  #why[hidden]{display:none}
+  /* bottom controls */
+  #dock{pointer-events:none;display:flex;flex-direction:column;gap:12px}
+  #status{
+    font-family:"Fraunces",serif;font-style:italic;font-size:clamp(14px,3vw,19px);
+    color:var(--ok);max-width:34ch;min-height:1.4em;line-height:1.3;
+    text-shadow:0 1px 18px rgba(0,0,0,.6)
+  }
+  #btns{display:flex;flex-wrap:wrap;gap:9px;pointer-events:auto}
+  button{
+    pointer-events:auto;font-family:"Inter",sans-serif;font-size:13px;font-weight:500;
+    color:var(--ink);background:rgba(20,21,28,.7);border:1px solid var(--line);
+    border-radius:999px;padding:9px 15px;cursor:pointer;backdrop-filter:blur(6px);
+    transition:border-color .15s, color .15s, background .15s;
+  }
+  button:hover{border-color:#4a4b58}
+  button:active{transform:translateY(1px)}
+  button[aria-pressed="true"]{background:var(--ink);color:#15161e;border-color:var(--ink)}
+  button:focus-visible{outline:2px solid var(--ember);outline-offset:2px}
+  .hint{font-family:"Inter",sans-serif;font-size:11.5px;color:var(--mute)}
+  #lang{position:fixed;top:0;right:0;pointer-events:auto;display:flex;gap:0;
+    margin:clamp(14px,3vw,30px);border:1px solid var(--line);border-radius:999px;overflow:hidden;
+    background:rgba(20,21,28,.7);backdrop-filter:blur(6px)}
+  #lang button{border:0;border-radius:0;background:transparent;padding:7px 13px;
+    font-size:12px;letter-spacing:.06em;color:var(--mute);backdrop-filter:none}
+  #lang button.on{background:var(--ink);color:#15161e}
+  #lang button:focus-visible{outline-offset:-2px}
+  #vignette{position:fixed;inset:0;pointer-events:none;
+    background:radial-gradient(125% 95% at 50% 44%, rgba(0,0,0,0) 36%, rgba(5,5,9,.6) 100%)}
+  @media (max-width:540px){
+    header p{max-width:40ch}
+    #panel{padding:10px 12px 11px}
+    #status{max-width:30ch}
+    #btns button{padding:8px 13px}
+  }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="vignette"></div>
+<div id="lang">
+  <button data-l="ca" class="on">CA</button>
+  <button data-l="en">EN</button>
+</div>
+<div id="ui">
+  <div class="pad">
+    <header>
+      <h1 id="title">Pentina l’eriçó</h1>
+      <p id="intro">Arrossega pel pèl per aplanar-lo. En algun lloc sempre sobreviurà un remolí. És un teorema, no pas un nivell de dificultat.</p>
+    </header>
+    <div id="panel">
+      <div class="row">
+        <div id="swirl">+2<small>&nbsp;REMOLÍ TOTAL</small></div>
+      </div>
+      <div id="sub">remolins: 2</div>
+      <button id="whyBtn" aria-expanded="false">d’on surt el +2?<span class="car">›</span></button>
+      <div id="why" hidden>El +2 és la característica d’Euler de l’esfera: depèn només de la forma, no de com pentinis. El teorema de Poincaré–Hopf obliga els remolins a sumar-lo sempre, així que mai no els pots eliminar tots.</div>
+    </div>
+  </div>
+
+  <div class="pad" id="dock">
+    <div id="status">Pentina’l ben pla. No te’n sortiràs.</div>
+    <div id="btns">
+      <button id="mode" aria-pressed="false">Gira la vista</button>
+      <button id="sweep">Pentina recte</button>
+      <button id="reset">Pèl nou</button>
+    </div>
+    <div class="hint" id="hint">Consell: busca un remolí encès i pentina-hi just per sobre. Mira on s’escapa.</div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+/* ------------------------------------------------------------------ *
+ *  Comb the Hedgehog — the hairy ball theorem you can lose to.
+ *  Per-face index of the tangent field always sums to +2 (Euler char
+ *  of the sphere). Verified in node before shipping: combing + smoothing
+ *  relocate the cowlicks but never destroy them.
+ * ------------------------------------------------------------------ */
+(function(){
+"use strict";
+
+// ---------- tiny vec3 helpers (plain arrays for the field math) ----------
+const add=(a,b)=>[a[0]+b[0],a[1]+b[1],a[2]+b[2]];
+const sub=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]];
+const mul=(a,s)=>[a[0]*s,a[1]*s,a[2]*s];
+const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+const len=a=>Math.hypot(a[0],a[1],a[2]);
+const clamp=(v,lo,hi)=>v<lo?lo:(v>hi?hi:v);
+const norm=a=>{const l=len(a);return l>1e-12?[a[0]/l,a[1]/l,a[2]/l]:[0,0,0];};
+const projT=(p,d)=>{const k=dot(d,p);return norm([d[0]-k*p[0],d[1]-k*p[1],d[2]-k*p[2]]);};
+function transport(t,q,p){ // parallel-transport tangent t at q onto p
+  const ax=cross(q,p); const s=len(ax); const c=dot(q,p);
+  if(s<1e-9) return c>0?t:mul(t,-1);
+  const k=[ax[0]/s,ax[1]/s,ax[2]/s], kt=dot(k,t);
+  return [ t[0]*c+(k[1]*t[2]-k[2]*t[1])*s+k[0]*kt*(1-c),
+           t[1]*c+(k[2]*t[0]-k[0]*t[2])*s+k[1]*kt*(1-c),
+           t[2]*c+(k[0]*t[1]-k[1]*t[0])*s+k[2]*kt*(1-c) ];
+}
+
+// ---------- icosphere with shared vertices + faces ----------
+function icosphere(detail){
+  const t=(1+Math.sqrt(5))/2;
+  let V=[[-1,t,0],[1,t,0],[-1,-t,0],[1,-t,0],[0,-1,t],[0,1,t],
+         [0,-1,-t],[0,1,-t],[t,0,-1],[t,0,1],[-t,0,-1],[-t,0,1]].map(norm);
+  let F=[[0,11,5],[0,5,1],[0,1,7],[0,7,10],[0,10,11],[1,5,9],[5,11,4],
+         [11,10,2],[10,7,6],[7,1,8],[3,9,4],[3,4,2],[3,2,6],[3,6,8],
+         [3,8,9],[4,9,5],[2,4,11],[6,2,10],[8,6,7],[9,8,1]];
+  const cache={};
+  const mid=(a,b)=>{const key=a<b?a+'_'+b:b+'_'+a;if(cache[key]!==undefined)return cache[key];
+    const m=norm(mul(add(V[a],V[b]),.5));V.push(m);return cache[key]=V.length-1;};
+  for(let d=0;d<detail;d++){const nf=[];for(const f of F){
+    const a=mid(f[0],f[1]),b=mid(f[1],f[2]),c=mid(f[2],f[0]);
+    nf.push([f[0],a,c],[f[1],b,a],[f[2],c,b],[a,b,c]);}F=nf;}
+  // adjacency
+  const adj=V.map(()=>new Set());
+  for(const f of F){for(let i=0;i<3;i++){adj[f[i]].add(f[(i+1)%3]);adj[f[i]].add(f[(i+2)%3]);}}
+  return {V,F,adj:adj.map(s=>[...s])};
+}
+
+// ---------- stable tangent basis + face index ----------
+function basisAngle(t,p){
+  const ref = Math.abs(p[2])<0.9 ? [0,0,1] : [1,0,0];
+  const e1=projT(p,ref); const e2=cross(p,e1);
+  return Math.atan2(dot(t,e2),dot(t,e1));
+}
+const wrap=a=>{while(a>Math.PI)a-=2*Math.PI;while(a<-Math.PI)a+=2*Math.PI;return a;};
+function faceIndex(f,dirs,V){
+  const pa=V[f[0]],pb=V[f[1]],pc=V[f[2]];
+  const Aa=basisAngle(dirs[f[0]],pa);
+  const Ab=basisAngle(transport(dirs[f[1]],pb,pa),pa);
+  const Ac=basisAngle(transport(dirs[f[2]],pc,pa),pa);
+  return Math.round((wrap(Ab-Aa)+wrap(Ac-Ab)+wrap(Aa-Ac))/(2*Math.PI));
+}
+
+// ===================================================================
+//  Setup
+// ===================================================================
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const small  = innerWidth<760 || matchMedia('(pointer:coarse)').matches;
+const DETAIL = small?4:5;            // 2562 hairs on phones, 10242 on desktop
+const {V,F,adj} = icosphere(DETAIL);
+const N=V.length;
+
+const Rroot=1.0, HAIR=small?0.066:0.05;
+const hairLen=new Float32Array(N);
+for(let i=0;i<N;i++) hairLen[i]=HAIR*(0.78+0.5*Math.abs(Math.sin(V[i][0]*9+V[i][1]*7+V[i][2]*5)));
+
+// field: tilted swirl -> two visible cowlicks to attack
+let dirs=new Array(N);
+function seedField(){
+  const axis=norm([0.35,0.82,0.45]);
+  for(let i=0;i<N;i++) dirs[i]=projT(V[i],cross(axis,V[i]));
+}
+seedField();
+
+// ---------- three.js scene ----------
+const canvas=document.getElementById('c');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:!small,alpha:false});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x0b0c11);
+scene.fog=new THREE.Fog(0x0b0c11, 3.0, 6.2);
+
+const camera=new THREE.PerspectiveCamera(42,1,0.1,100);
+let camR=3.25, camTheta=0.5, camPhi=1.18;
+function placeCamera(){
+  camera.position.set(
+    camR*Math.sin(camPhi)*Math.cos(camTheta),
+    camR*Math.cos(camPhi),
+    camR*Math.sin(camPhi)*Math.sin(camTheta));
+  camera.lookAt(0,0,0);
+}
+placeCamera();
+
+// body (occludes far-side fur)
+const body=new THREE.Mesh(
+  new THREE.SphereGeometry(0.985,64,48),
+  new THREE.MeshStandardMaterial({color:0x16121b,roughness:1.0,metalness:0.0})
+);
+scene.add(body);
+scene.add(new THREE.AmbientLight(0x222530,0.7));
+const key=new THREE.DirectionalLight(0xfff0d8,1.4); key.position.set(2,2.5,1.4); scene.add(key);
+const rim=new THREE.DirectionalLight(0x495a82,0.8); rim.position.set(-2,-1,-2); scene.add(rim);
+
+// hairs as line segments
+const segGeo=new THREE.BufferGeometry();
+const pos=new Float32Array(N*6);
+const col=new Float32Array(N*6);
+segGeo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+segGeo.setAttribute('color',new THREE.BufferAttribute(col,3));
+const hairs=new THREE.LineSegments(segGeo,new THREE.LineBasicMaterial({
+  vertexColors:true,transparent:true,opacity:small?0.85:0.7}));
+scene.add(hairs);
+
+const LIGHT=norm([2,2.5,1.4]);
+function refreshHairs(){
+  const viewDir=norm([camera.position.x,camera.position.y,camera.position.z]);
+  for(let i=0;i<N;i++){
+    const p=V[i], d=dirs[i], o=i*6;
+    pos[o]  =p[0]*Rroot; pos[o+1]=p[1]*Rroot; pos[o+2]=p[2]*Rroot;
+    pos[o+3]=p[0]*Rroot+d[0]*hairLen[i];
+    pos[o+4]=p[1]*Rroot+d[1]*hairLen[i];
+    pos[o+5]=p[2]*Rroot+d[2]*hairLen[i];
+    let lit=0.45+0.55*Math.max(0,dot(p,LIGHT));
+    const facing=Math.max(0,dot(p,viewDir));
+    lit*= (0.30+0.70*facing);                 // dim the far rim
+    const r=lit*0.91+0.02, g=lit*0.85+0.02, b=lit*0.70+0.03; // warm fur
+    col[o]=r*0.55;col[o+1]=g*0.55;col[o+2]=b*0.55;            // root darker
+    col[o+3]=Math.min(1,r*1.18);col[o+4]=Math.min(1,g*1.18);col[o+5]=Math.min(1,b*1.18);
+  }
+  segGeo.attributes.position.needsUpdate=true;
+  segGeo.attributes.color.needsUpdate=true;
+}
+
+// cowlick marker sprites
+function emberTexture(){
+  const s=128,cv=document.createElement('canvas');cv.width=cv.height=s;
+  const g=cv.getContext('2d').createRadialGradient(s/2,s/2,0,s/2,s/2,s/2);
+  g.addColorStop(0,'rgba(255,234,200,1)');g.addColorStop(.18,'rgba(234,118,19,.95)');
+  g.addColorStop(.5,'rgba(165,8,46,.55)');g.addColorStop(1,'rgba(165,8,46,0)');
+  const ctx=cv.getContext('2d');ctx.fillStyle=g;ctx.fillRect(0,0,s,s);
+  const tx=new THREE.Texture(cv);tx.needsUpdate=true;return tx;
+}
+const emberTex=emberTexture();
+const markers=[];
+function getMarker(i){
+  if(markers[i])return markers[i];
+  const m=new THREE.Sprite(new THREE.SpriteMaterial({map:emberTex,blending:THREE.AdditiveBlending,
+    transparent:true,depthWrite:false,depthTest:false}));
+  scene.add(m);markers[i]=m;return m;
+}
+
+// ===================================================================
+//  Field detection (cowlicks) — runs every few frames
+// ===================================================================
+let cowlicks=[], totalSwirl=2;
+function detect(){
+  const hits=[];
+  for(const f of F){const idx=faceIndex(f,dirs,V);
+    if(idx!==0){const c=norm(add(add(V[f[0]],V[f[1]]),V[f[2]]));hits.push({c,s:idx});}}
+  // greedy angular clustering
+  const cl=[];
+  for(const h of hits){let best=null;
+    for(const k of cl) if(dot(k.c,h.c)>0.93){best=k;break;}
+    if(best){best.s+=h.s;best.c=norm(add(mul(best.c,best.n),h.c));best.n++;}
+    else cl.push({c:h.c,s:h.s,n:1});}
+  cowlicks=cl.filter(k=>Math.abs(k.s)>=1);
+  totalSwirl=cl.reduce((a,k)=>a+k.s,0);
+}
+
+// ===================================================================
+//  Smoothing — gentle continuity. This is why cowlicks come back.
+// ===================================================================
+// Continuity rate. Lower = a flattened patch holds longer before the
+// cowlick creeps back in. Kept gentle so the singularity hunts slowly.
+const LAMBDA=0.022;
+const tmp=new Array(N);
+function smooth(){
+  for(let i=0;i<N;i++){
+    const nb=adj[i];let ax=0,ay=0,az=0;
+    for(const j of nb){const t=transport(dirs[j],V[j],V[i]);ax+=t[0];ay+=t[1];az+=t[2];}
+    const sm=projT(V[i],[ax,ay,az]);
+    const bl=projT(V[i],[dirs[i][0]*(1-LAMBDA)+sm[0]*LAMBDA,
+                         dirs[i][1]*(1-LAMBDA)+sm[1]*LAMBDA,
+                         dirs[i][2]*(1-LAMBDA)+sm[2]*LAMBDA]);
+    tmp[i]= len(bl)>0.5?bl:dirs[i];
+  }
+  for(let i=0;i<N;i++)dirs[i]=tmp[i];
+}
+
+// ===================================================================
+//  Interaction
+// ===================================================================
+let mode='comb';                 // 'comb' | 'rotate'
+let lastHit=null, lastPointer=null, autoT=0;
+const ray=new THREE.Raycaster();
+const ndc=new THREE.Vector2();
+const BRUSH=small?0.42:0.34, SIGMA=BRUSH*0.62, STR=0.55;
+
+function hitDir(ev){
+  const r=canvas.getBoundingClientRect();
+  ndc.x=((ev.clientX-r.left)/r.width)*2-1;
+  ndc.y=-((ev.clientY-r.top)/r.height)*2+1;
+  ray.setFromCamera(ndc,camera);
+  const hit=ray.intersectObject(body,false)[0];
+  return hit?norm([hit.point.x,hit.point.y,hit.point.z]):null;
+}
+function combAt(center,move){
+  const m=projT(center,move); if(len(m)<1e-6)return;
+  for(let i=0;i<N;i++){
+    const g=Math.acos(Math.max(-1,Math.min(1,dot(V[i],center))));
+    if(g>BRUSH)continue;
+    const w=Math.exp(-(g*g)/(SIGMA*SIGMA))*STR;
+    const tgt=projT(V[i],m); if(len(tgt)<0.5)continue;
+    const a=Math.min(0.9,w);
+    dirs[i]=projT(V[i],[dirs[i][0]*(1-a)+tgt[0]*a,
+                        dirs[i][1]*(1-a)+tgt[1]*a,
+                        dirs[i][2]*(1-a)+tgt[2]*a]);
+  }
+  touched=true;
+}
+
+let touched=false;
+// multi-pointer gesture handling: 1 finger combs (or orbits in rotate mode),
+// 2 fingers pinch-zoom and turn the creature. Desktop keeps wheel + drag.
+const ptrs=new Map();
+let gesture=null, pinchD0=0, camR0=camR, gMid=null;
+const PI=Math.PI;
+
+canvas.addEventListener('pointerdown',ev=>{
+  canvas.setPointerCapture(ev.pointerId);
+  ptrs.set(ev.pointerId,{x:ev.clientX,y:ev.clientY});
+  autoT=0;
+  if(ptrs.size===1){
+    if(mode==='rotate'){gesture='orbit';lastPointer=[ev.clientX,ev.clientY];}
+    else{gesture='comb';lastHit=hitDir(ev);}
+  }else if(ptrs.size===2){
+    gesture='pinch';
+    const [a,b]=[...ptrs.values()];
+    pinchD0=Math.hypot(a.x-b.x,a.y-b.y); camR0=camR;
+    gMid=[(a.x+b.x)/2,(a.y+b.y)/2]; lastHit=null;
+  }
+});
+canvas.addEventListener('pointermove',ev=>{
+  if(!ptrs.has(ev.pointerId))return;
+  ptrs.set(ev.pointerId,{x:ev.clientX,y:ev.clientY});
+  if(gesture==='comb'){
+    const h=hitDir(ev);
+    if(h&&lastHit){const move=sub(h,lastHit);const ctr=norm(add(h,lastHit));combAt(ctr,move);}
+    lastHit=h;
+  }else if(gesture==='orbit'){
+    const dx=ev.clientX-lastPointer[0], dy=ev.clientY-lastPointer[1];
+    camTheta-=dx*0.006; camPhi=clamp(camPhi-dy*0.006,0.18,PI-0.18);
+    lastPointer=[ev.clientX,ev.clientY]; placeCamera();
+  }else if(gesture==='pinch'){
+    const [a,b]=[...ptrs.values()];
+    const d=Math.hypot(a.x-b.x,a.y-b.y);
+    if(pinchD0>0&&d>0) camR=clamp(camR0*(pinchD0/d),2.1,5.5);
+    const mid=[(a.x+b.x)/2,(a.y+b.y)/2];
+    if(gMid){camTheta-=(mid[0]-gMid[0])*0.005; camPhi=clamp(camPhi-(mid[1]-gMid[1])*0.005,0.18,PI-0.18);}
+    gMid=mid; placeCamera();
+  }
+});
+function dropPtr(ev){
+  ptrs.delete(ev.pointerId);
+  try{canvas.releasePointerCapture(ev.pointerId);}catch(e){}
+  if(ptrs.size===0){gesture=null;lastHit=null;}
+  else if(ptrs.size===1){
+    const p=[...ptrs.values()][0];
+    if(mode==='rotate'){gesture='orbit';lastPointer=[p.x,p.y];}
+    else{gesture='comb';lastHit=null;}
+  }
+}
+canvas.addEventListener('pointerup',dropPtr);
+canvas.addEventListener('pointercancel',dropPtr);
+canvas.addEventListener('wheel',ev=>{ev.preventDefault();
+  camR=clamp(camR+ev.deltaY*0.0016,2.1,5.5);placeCamera();},{passive:false});
+
+// buttons
+const $=id=>document.getElementById(id);
+
+// ===================================================================
+//  Language layer (Catalan default for El Gegant del pi; English toggle)
+// ===================================================================
+const I18N={
+  ca:{
+    title:"Pentina l'eriço",
+    intro:"Arrossega pel pel per aplanar-lo. En algun lloc sempre sobreviura un remoli. Es un teorema, no pas un nivell de dificultat.",
+    swirlLabel:"REMOLI TOTAL",
+    cowlicksLabel:"remolins",
+    whyToggle:"d'on surt el +2?",
+    whyText:"El +2 es la caracteristica d'Euler de l'esfera: depen nomes de la forma, no de com pentinis. El teorema de Poincare-Hopf obliga els remolins a sumar-lo sempre, aixi que mai no els pots eliminar tots.",
+    btnRotate:"Gira la vista", btnComb:"Pentina",
+    btnSweep:"Pentina recte", btnReset:"Pel nou",
+    hintComb:"Consell: busca un remoli ences i pentina-hi just per sobre. Mira on s'escapa.",
+    hintRotate:"Arrossega per girar la bestiola. Torna a pentinar per continuar lluitant.",
+    st_start:"Pentina'l ben pla. No te'n sortiras.",
+    st_reset:"Pel nou. Dos remolins, com sempre.",
+    st_sweep:"Pentinat tot cap a un costat. Tot el remoli s'amuntega als pols.",
+    st_one:"L'has reduit a un sol remoli. No pot baixar mes.",
+    st_two:"Dos remolins. Tapa'n un i l'altre se l'empassa.",
+    st_many:n=>"Has partit el remoli en "+n+" nusos. Tot i aixi sumen +2."
+  },
+  en:{
+    title:"Comb the Hedgehog",
+    intro:"Drag across the fur to flatten it. Somewhere a cowlick will always survive. It's a theorem, not a difficulty setting.",
+    swirlLabel:"TOTAL SWIRL",
+    cowlicksLabel:"cowlicks",
+    whyToggle:"where's the +2 from?",
+    whyText:"The +2 is the Euler characteristic of the sphere: it depends only on the shape, not on how you comb. The Poincaré–Hopf theorem forces the cowlicks to add up to it, so you can never clear them all.",
+    btnRotate:"Rotate view", btnComb:"Comb fur",
+    btnSweep:"Comb one way", btnReset:"Reset fur",
+    hintComb:"Tip: hunt a glowing cowlick and comb straight over it. Watch where it runs.",
+    hintRotate:"Drag to turn the creature. Switch back to comb to keep fighting.",
+    st_start:"Comb it flat. You won't manage it.",
+    st_reset:"Fresh fur. Two cowlicks, like always.",
+    st_sweep:"Combed flat one way. The whole swirl piles into the poles.",
+    st_one:"Down to a single cowlick. It can't go lower.",
+    st_two:"Two cowlicks. Close one and the other swallows it.",
+    st_many:n=>"You split the swirl into "+n+" knots. They still add up to +2."
+  }
+};
+// Catalan needs accents that bare ASCII can't carry; restore them here so the
+// source stays clean and the rendered copy is correct for the blog.
+Object.assign(I18N.ca,{
+  title:"Pentina l\u2019eri\u00e7\u00f3",
+  intro:"Arrossega pel p\u00e8l per aplanar-lo. En algun lloc sempre sobreviur\u00e0 un remol\u00ed. \u00c9s un teorema, no pas un nivell de dificultat.",
+  swirlLabel:"REMOL\u00cd TOTAL",
+  whyToggle:"d\u2019on surt el +2?",
+  whyText:"El +2 \u00e9s la caracter\u00edstica d\u2019Euler de l\u2019esfera: dep\u00e8n nom\u00e9s de la forma, no de com pentinis. El teorema de Poincar\u00e9\u2013Hopf obliga els remolins a sumar-lo sempre, aix\u00ed que mai no els pots eliminar tots.",
+  btnReset:"P\u00e8l nou",
+  hintComb:"Consell: busca un remol\u00ed enc\u00e8s i pentina-hi just per sobre. Mira on s\u2019escapa.",
+  st_start:"Pentina\u2019l ben pla. No te\u2019n sortir\u00e0s.",
+  st_reset:"P\u00e8l nou. Dos remolins, com sempre.",
+  st_sweep:"Pentinat tot cap a un costat. Tot el remol\u00ed s\u2019amuntega als pols.",
+  st_one:"L\u2019has redu\u00eft a un sol remol\u00ed. No pot baixar m\u00e9s.",
+  st_two:"Dos remolins. Tapa\u2019n un i l\u2019altre se l\u2019empassa.",
+  st_many:n=>"Has partit el remol\u00ed en "+n+" nusos. Tot i aix\u00ed sumen +2."
+});
+
+let lang='ca';
+let statusKey='start', statusN=0, lastCount=-1, statusLock=0;
+
+function renderStatus(){
+  const T=I18N[lang];
+  const map={start:T.st_start,reset:T.st_reset,sweep:T.st_sweep,
+             one:T.st_one,two:T.st_two,many:T.st_many(statusN)};
+  $('status').textContent=map[statusKey]||"";
+}
+function setStatus(key,n,lock){statusKey=key;if(n!=null)statusN=n;renderStatus();if(lock)statusLock=lock;}
+function refreshModeUI(){
+  const T=I18N[lang];
+  $('mode').textContent = mode==='rotate'?T.btnComb:T.btnRotate;
+  $('hint').textContent = mode==='rotate'?T.hintRotate:T.hintComb;
+}
+function applyStatic(){
+  const T=I18N[lang];
+  document.documentElement.lang=lang;
+  $('title').textContent=T.title;
+  $('intro').textContent=T.intro;
+  $('sweep').textContent=T.btnSweep;
+  $('reset').textContent=T.btnReset;
+  $('whyBtn').innerHTML=T.whyToggle+'<span class="car">\u203a</span>';
+  $('why').textContent=T.whyText;
+  document.querySelectorAll('#lang button').forEach(b=>b.classList.toggle('on',b.dataset.l===lang));
+  refreshModeUI(); renderStatus(); syncUI();
+}
+document.querySelectorAll('#lang button').forEach(b=>
+  b.addEventListener('click',()=>{lang=b.dataset.l;applyStatic();}));
+
+$('whyBtn').addEventListener('click',()=>{
+  const open=$('why').hasAttribute('hidden');
+  $('why').toggleAttribute('hidden',!open);
+  $('whyBtn').setAttribute('aria-expanded',open?'true':'false');
+});
+
+$('mode').addEventListener('click',()=>{
+  mode=mode==='comb'?'rotate':'comb';
+  $('mode').setAttribute('aria-pressed',mode==='rotate');
+  refreshModeUI();
+});
+$('reset').addEventListener('click',()=>{seedField();touched=false;autoT=0;lastCount=-1;setStatus('reset',null,30);});
+$('sweep').addEventListener('click',()=>{           // comb everything one way -> fountain
+  const axis=norm([0.1,1,0.05]);
+  for(let i=0;i<N;i++){const t=projT(V[i],cross(axis,V[i]));if(len(t)>0.3)dirs[i]=t;}
+  // then bias strongly toward one pole to dramatise the swirl piling up
+  for(let i=0;i<N;i++){const tgt=projT(V[i],[0,-1,0]);if(len(tgt)>0.4)
+    dirs[i]=projT(V[i],[dirs[i][0]*0.25+tgt[0]*0.75,dirs[i][1]*0.25+tgt[1]*0.75,dirs[i][2]*0.25+tgt[2]*0.75]);}
+  touched=true;autoT=0;lastCount=-1;setStatus('sweep',null,30);
+});
+
+// ===================================================================
+//  Status copy reacts to cowlick count
+// ===================================================================
+function updateStatus(){
+  if(statusLock>0){statusLock--;return;}
+  if(!touched)return;
+  const n=cowlicks.length;
+  if(n===0||n===lastCount)return; lastCount=n;
+  if(n===1) setStatus('one');
+  else if(n===2) setStatus('two');
+  else setStatus('many',n);
+}
+
+// ===================================================================
+//  Loop
+// ===================================================================
+function syncUI(){
+  const T=I18N[lang];
+  $('swirl').innerHTML=(totalSwirl>=0?'+':'')+totalSwirl+'<small>&nbsp;'+T.swirlLabel+'</small>';
+  $('sub').textContent=T.cowlicksLabel+': '+cowlicks.length;
+}
+let frame=0;
+function loop(){
+  requestAnimationFrame(loop);
+  frame++;
+  // idle slow spin when nothing is being touched
+  if(ptrs.size===0 && !reduce){ autoT++; if(autoT>40){ camTheta+=0.0016; placeCamera(); } }
+  smooth();
+  if(frame%6===0){ detect(); syncUI(); updateStatus(); }
+  // markers — fade the ones that have run to the far side
+  for(let i=0;i<markers.length;i++) if(markers[i]) markers[i].visible=false;
+  const pulse=1+0.16*Math.sin(frame*0.12);
+  const vd=norm([camera.position.x,camera.position.y,camera.position.z]);
+  cowlicks.forEach((k,i)=>{
+    const m=getMarker(i);m.visible=true;
+    const s=(0.34+0.12*Math.abs(k.s))*pulse;m.scale.set(s,s,s);
+    m.position.set(k.c[0]*1.05,k.c[1]*1.05,k.c[2]*1.05);
+    const face=clamp((dot(k.c,vd)+0.35)/1.1,0,1);   // 1 front, ~0.12 behind
+    m.material.opacity=0.14+0.86*face;
+  });
+  refreshHairs();
+  renderer.render(scene,camera);
+}
+
+function resize(){
+  const w=innerWidth,h=innerHeight;
+  renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();
+}
+addEventListener('resize',resize);
+resize();
+detect();applyStatic();
+loop();
+
+})();
+</script>
+</body>
+</html>
