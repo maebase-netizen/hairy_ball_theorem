@@ -462,12 +462,13 @@ const ptrs=new Map();
 let gesture=null, pinchD0=0, camR0=camR, gMid=null;
 const PI=Math.PI;
 
+canvas.addEventListener('contextmenu',e=>e.preventDefault());
 canvas.addEventListener('pointerdown',ev=>{
   canvas.setPointerCapture(ev.pointerId);
   ptrs.set(ev.pointerId,{x:ev.clientX,y:ev.clientY});
   autoT=0;
   if(ptrs.size===1){
-    if(mode==='rotate'){gesture='orbit';lastPointer=[ev.clientX,ev.clientY];}
+    if(mode==='rotate'||ev.button===2){gesture='orbit';lastPointer=[ev.clientX,ev.clientY];}
     else{gesture='comb';lastHit=hitDir(ev);}
   }else if(ptrs.size===2){
     gesture='pinch';
