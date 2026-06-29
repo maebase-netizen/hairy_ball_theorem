@@ -67,6 +67,15 @@
   button:active{transform:translateY(1px)}
   button[aria-pressed="true"]{background:var(--ink);color:#15161e;border-color:var(--ink)}
   button:focus-visible{outline:2px solid var(--ember);outline-offset:2px}
+  .prow{display:flex;flex-wrap:wrap;gap:8px;pointer-events:auto}
+  .prow button{display:flex;flex-direction:column;align-items:flex-start;gap:1px;
+    padding:7px 13px;line-height:1.16;text-align:left}
+  .prow button .pl{font-weight:500}
+  .prow button .pf{font-family:"Space Mono",monospace;font-size:11px;
+    color:var(--mute);letter-spacing:.01em}
+  .prow button:hover .pf{color:var(--ok)}
+  .ptitle{font-family:"Inter",sans-serif;font-size:10.5px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--mute);margin:2px 0 -2px}
   .hint{font-family:"Inter",sans-serif;font-size:11.5px;color:var(--mute)}
   #lang{position:fixed;top:0;right:0;pointer-events:auto;display:flex;gap:0;
     margin:clamp(14px,3vw,30px);border:1px solid var(--line);border-radius:999px;overflow:hidden;
@@ -112,8 +121,20 @@
     <div id="status">Pentina’l ben pla. No te’n sortiràs.</div>
     <div id="btns">
       <button id="mode" aria-pressed="false">Gira la vista</button>
+      <button id="auto" aria-pressed="false">Gir automatic</button>
       <button id="sweep">Pentina recte</button>
       <button id="reset">Pèl nou</button>
+    </div>
+    <div class="ptitle" id="ptitle">Pentinats canonics</div>
+    <div id="presets" class="prow">
+      <button data-preset="poles"><span class="pl" id="pl_poles">Pol a pol</span><span class="pf">z &middot; +1, +1</span></button>
+      <button data-preset="swirl"><span class="pl" id="pl_swirl">Doble gir</span><span class="pf">iz &middot; +1, +1</span></button>
+      <button data-preset="double"><span class="pl" id="pl_double">Remoli doble</span><span class="pf">z&sup2; &middot; +2</span></button>
+    </div>
+    <div class="ptitle" id="ptitle2">Del codi de grafics</div>
+    <div id="presets2" class="prow">
+      <button data-preset="hm"><span class="pl">Hughes–Möller</span><span class="pf">b1 = b2 × n · +1, +1</span></button>
+      <button data-preset="frisvad"><span class="pl">Frisvad</span><span class="pf">a = 1/(1+z) · +2</span></button>
     </div>
     <div class="hint" id="hint">Consell: busca un remolí encès i pentina-hi just per sobre. Mira on s’escapa.</div>
   </div>
@@ -197,11 +218,69 @@ const Rroot=1.0, HAIR=small?0.066:0.05;
 const hairLen=new Float32Array(N);
 for(let i=0;i<N;i++) hairLen[i]=HAIR*(0.78+0.5*Math.abs(Math.sin(V[i][0]*9+V[i][1]*7+V[i][2]*5)));
 
+// ---- extra VISUAL hairs, interpolated inside each face ------------------
+// Denser fur without touching the physics: the field (dirs), the smoothing
+// and the cowlick detection still live on the V/F mesh; these hairs only
+// read it. SUBH = hairs added per triangle; lower it if a weak device lags.
+const SUBH = small?1:2;
+const BARY = ({
+  1:[[0.3334,0.3333,0.3333]],
+  2:[[0.56,0.26,0.18],[0.20,0.30,0.50]],
+  3:[[0.52,0.30,0.18],[0.22,0.52,0.26],[0.28,0.18,0.54]]
+})[SUBH] || [[0.3334,0.3333,0.3333]];
+const xA=[],xB=[],xC=[],xWA=[],xWB=[],xWC=[],xBX=[],xBY=[],xBZ=[],xLEN=[];
+for(const f of F){ const a=f[0],b=f[1],c=f[2];
+  for(let s=0;s<BARY.length;s++){ const wa=BARY[s][0],wb=BARY[s][1],wc=BARY[s][2];
+    let bx=V[a][0]*wa+V[b][0]*wb+V[c][0]*wc;
+    let by=V[a][1]*wa+V[b][1]*wb+V[c][1]*wc;
+    let bz=V[a][2]*wa+V[b][2]*wb+V[c][2]*wc;
+    const L=Math.hypot(bx,by,bz)||1; bx/=L;by/=L;bz/=L;
+    xA.push(a);xB.push(b);xC.push(c);xWA.push(wa);xWB.push(wb);xWC.push(wc);
+    xBX.push(bx);xBY.push(by);xBZ.push(bz);
+    xLEN.push(HAIR*(0.78+0.5*Math.abs(Math.sin(bx*9+by*7+bz*5))));
+  }
+}
+const XN=xA.length, HAIRS=N+XN;
+
 // field: tilted swirl -> two visible cowlicks to attack
 let dirs=new Array(N);
 function seedField(){
   const axis=norm([0.35,0.82,0.45]);
   for(let i=0;i<N;i++) dirs[i]=projT(V[i],cross(axis,V[i]));
+}
+// source (-axis) + sink (+axis): two +1 cowlicks, local model z
+function seedSourceSink(){
+  const axis=norm([0.32,0.86,0.40]);
+  for(let i=0;i<N;i++) dirs[i]=projT(V[i],axis);
+}
+// single index +2 cowlick: holomorphic z^2 mapped through stereographic
+// projection; regular (combed) at the opposite pole.
+function seedDouble(){
+  const axis=norm([0.18,0.97,0.16]);
+  const seed=Math.abs(axis[1])<0.9?[0,1,0]:[1,0,0];
+  const u=norm(cross(axis,seed)), v=cross(axis,u);
+  for(let i=0;i<N;i++){const p=V[i], a=dot(p,axis);
+    if(a>0.99995){dirs[i]=[0,0,0];continue;}             // the lone +2 knot
+    const den=1+a, X=dot(p,u)/den, Y=dot(p,v)/den, wx=X*X-Y*Y, wy=2*X*Y; // w=z^2
+    const apx=axis[0]+p[0],apy=axis[1]+p[1],apz=axis[2]+p[2];
+    const e1=norm([u[0]-X*apx,u[1]-X*apy,u[2]-X*apz]);   // conformal tangent frame
+    const e2=norm([v[0]-Y*apx,v[1]-Y*apy,v[2]-Y*apz]);
+    dirs[i]=projT(p,[wx*e1[0]+wy*e2[0],wx*e1[1]+wy*e2[1],wx*e1[2]+wy*e2[2]]);}
+}
+// Hughes-Moller (1999): pick b2 _|_ n via a branch on |x| vs |z|, then b1 = b2 x n.
+// Real tangent-frame code; the branch leaves two +1 cowlicks on the |x|=|z| seam.
+function seedHughesMoller(){
+  for(let i=0;i<N;i++){const p=V[i];
+    let b2 = Math.abs(p[0])>Math.abs(p[2]) ? [-p[1],p[0],0] : [0,-p[2],p[1]];
+    b2=norm(b2); dirs[i]=projT(p,cross(b2,p));}
+}
+// Frisvad (2012): same frame without normalising. a=1/(1+z) blows up at z=-1, so
+// the special case there buries the whole defect in one +2 knot at that pole.
+function seedFrisvad(){
+  for(let i=0;i<N;i++){const p=V[i], nz=p[2];
+    if(nz<-0.9999999){dirs[i]=projT(p,[0,-1,0]);continue;}
+    const a=1/(1+nz);
+    dirs[i]=projT(p,[1-p[0]*p[0]*a, -p[0]*p[1]*a, -p[0]]);}
 }
 seedField();
 
@@ -236,29 +315,51 @@ const rim=new THREE.DirectionalLight(0x495a82,0.8); rim.position.set(-2,-1,-2); 
 
 // hairs as line segments
 const segGeo=new THREE.BufferGeometry();
-const pos=new Float32Array(N*6);
-const col=new Float32Array(N*6);
+const pos=new Float32Array(HAIRS*6);
+const col=new Float32Array(HAIRS*6);
 segGeo.setAttribute('position',new THREE.BufferAttribute(pos,3));
 segGeo.setAttribute('color',new THREE.BufferAttribute(col,3));
 const hairs=new THREE.LineSegments(segGeo,new THREE.LineBasicMaterial({
-  vertexColors:true,transparent:true,opacity:small?0.85:0.7}));
+  vertexColors:true,transparent:true,opacity:small?0.7:0.55}));
 scene.add(hairs);
 
 const LIGHT=norm([2,2.5,1.4]);
 function refreshHairs(){
   const viewDir=norm([camera.position.x,camera.position.y,camera.position.z]);
+  const lx=LIGHT[0],ly=LIGHT[1],lz=LIGHT[2], vx=viewDir[0],vy=viewDir[1],vz=viewDir[2];
   for(let i=0;i<N;i++){
     const p=V[i], d=dirs[i], o=i*6;
     pos[o]  =p[0]*Rroot; pos[o+1]=p[1]*Rroot; pos[o+2]=p[2]*Rroot;
     pos[o+3]=p[0]*Rroot+d[0]*hairLen[i];
     pos[o+4]=p[1]*Rroot+d[1]*hairLen[i];
     pos[o+5]=p[2]*Rroot+d[2]*hairLen[i];
-    let lit=0.45+0.55*Math.max(0,dot(p,LIGHT));
-    const facing=Math.max(0,dot(p,viewDir));
+    let lit=0.45+0.55*Math.max(0,p[0]*lx+p[1]*ly+p[2]*lz);
+    const facing=Math.max(0,p[0]*vx+p[1]*vy+p[2]*vz);
     lit*= (0.30+0.70*facing);                 // dim the far rim
     const r=lit*0.91+0.02, g=lit*0.85+0.02, b=lit*0.70+0.03; // warm fur
     col[o]=r*0.55;col[o+1]=g*0.55;col[o+2]=b*0.55;            // root darker
     col[o+3]=Math.min(1,r*1.18);col[o+4]=Math.min(1,g*1.18);col[o+5]=Math.min(1,b*1.18);
+  }
+  for(let k=0;k<XN;k++){
+    const a=xA[k],b=xB[k],c=xC[k], da=dirs[a],db=dirs[b],dc=dirs[c];
+    const wa=xWA[k],wb=xWB[k],wc=xWC[k];
+    const bx=xBX[k],by=xBY[k],bz=xBZ[k];
+    let dx=da[0]*wa+db[0]*wb+dc[0]*wc;
+    let dy=da[1]*wa+db[1]*wb+dc[1]*wc;
+    let dz=da[2]*wa+db[2]*wb+dc[2]*wc;
+    const dn=dx*bx+dy*by+dz*bz; dx-=dn*bx;dy-=dn*by;dz-=dn*bz;   // project to tangent
+    let L=Math.hypot(dx,dy,dz);
+    if(L>1e-5){const s=1/L;dx*=s;dy*=s;dz*=s;}
+    const grow=(0.18+0.82*Math.min(1,L*1.25))*xLEN[k];          // limp near cowlicks
+    const o=(N+k)*6;
+    pos[o]=bx;pos[o+1]=by;pos[o+2]=bz;
+    pos[o+3]=bx+dx*grow;pos[o+4]=by+dy*grow;pos[o+5]=bz+dz*grow;
+    let lit=0.45+0.55*Math.max(0,bx*lx+by*ly+bz*lz);
+    const facing=Math.max(0,bx*vx+by*vy+bz*vz);
+    lit*= (0.30+0.70*facing);
+    const r=lit*0.91+0.02, g=lit*0.85+0.02, bb=lit*0.70+0.03;
+    col[o]=r*0.55;col[o+1]=g*0.55;col[o+2]=bb*0.55;
+    col[o+3]=Math.min(1,r*1.18);col[o+4]=Math.min(1,g*1.18);col[o+5]=Math.min(1,bb*1.18);
   }
   segGeo.attributes.position.needsUpdate=true;
   segGeo.attributes.color.needsUpdate=true;
@@ -325,6 +426,8 @@ function smooth(){
 // ===================================================================
 let mode='comb';                 // 'comb' | 'rotate'
 let lastHit=null, lastPointer=null, autoT=0;
+let autoSpin=false;
+let relax=0;                     // smoothing budget; only combing tops it up
 const ray=new THREE.Raycaster();
 const ndc=new THREE.Vector2();
 const BRUSH=small?0.42:0.34, SIGMA=BRUSH*0.62, STR=0.55;
@@ -349,7 +452,7 @@ function combAt(center,move){
                         dirs[i][1]*(1-a)+tgt[1]*a,
                         dirs[i][2]*(1-a)+tgt[2]*a]);
   }
-  touched=true;
+  touched=true; relax=14;
 }
 
 let touched=false;
@@ -431,7 +534,15 @@ const I18N={
     st_sweep:"Pentinat tot cap a un costat. Tot el remoli s'amuntega als pols.",
     st_one:"L'has reduit a un sol remoli. No pot baixar mes.",
     st_two:"Dos remolins. Tapa'n un i l'altre se l'empassa.",
-    st_many:n=>"Has partit el remoli en "+n+" nusos. Tot i aixi sumen +2."
+    st_many:n=>"Has partit el remoli en "+n+" nusos. Tot i aixi sumen +2.",
+    presetsTitle:"Pentinats canonics",
+    pLabelPoles:"Pol a pol", pLabelSwirl:"Doble gir", pLabelDouble:"Remoli doble",
+    st_p_poles:"Font i desguas: el pel va de pol a pol. Dos remolins de +1, com z a prop de cadascun.",
+    st_p_swirl:"Dos vortexs que giren, +1 cadascun. A prop dels pols el camp es com iz, un z girat 90 graus.",
+    st_p_double:"Tot el gir concentrat en un sol nus d'index +2, com z2. La resta queda llisa.",
+    btnAuto:"Gir automatic", presetsTitle2:"Del codi de grafics",
+    st_p_hm:"Hughes-Moller (1999): construeix un marc tangent des de la normal. La branca |x|>|z| deixa dues costures, dos remolins de +1.",
+    st_p_frisvad:"Frisvad (2012): el mateix sense normalitzar. El cas especial z<-1 amaga tot el defecte en un sol nus de +2 al pol."
   },
   en:{
     title:"Comb the Hedgehog",
@@ -449,7 +560,15 @@ const I18N={
     st_sweep:"Combed flat one way. The whole swirl piles into the poles.",
     st_one:"Down to a single cowlick. It can't go lower.",
     st_two:"Two cowlicks. Close one and the other swallows it.",
-    st_many:n=>"You split the swirl into "+n+" knots. They still add up to +2."
+    st_many:n=>"You split the swirl into "+n+" knots. They still add up to +2.",
+    presetsTitle:"Canonical combings",
+    pLabelPoles:"Pole to pole", pLabelSwirl:"Double swirl", pLabelDouble:"Double cowlick",
+    st_p_poles:"Source and sink: fur runs pole to pole. Two +1 cowlicks, like z near each.",
+    st_p_swirl:"Two turning vortices, +1 each. Near the poles the field is like iz, a z turned 90\u00b0.",
+    st_p_double:"All the turning in one knot of index +2, like z\u00b2. The rest combs flat.",
+    btnAuto:"Auto-rotate", presetsTitle2:"From graphics code",
+    st_p_hm:"Hughes\u2013M\u00f6ller (1999): builds a tangent frame from the normal. Its |x|>|z| branch leaves two seams, two +1 cowlicks.",
+    st_p_frisvad:"Frisvad (2012): the same without normalising. Its z<-1 special case hides the whole defect in one +2 knot at the pole."
   }
 };
 // Catalan needs accents that bare ASCII can't carry; restore them here so the
@@ -467,7 +586,15 @@ Object.assign(I18N.ca,{
   st_sweep:"Pentinat tot cap a un costat. Tot el remol\u00ed s\u2019amuntega als pols.",
   st_one:"L\u2019has redu\u00eft a un sol remol\u00ed. No pot baixar m\u00e9s.",
   st_two:"Dos remolins. Tapa\u2019n un i l\u2019altre se l\u2019empassa.",
-  st_many:n=>"Has partit el remol\u00ed en "+n+" nusos. Tot i aix\u00ed sumen +2."
+  st_many:n=>"Has partit el remol\u00ed en "+n+" nusos. Tot i aix\u00ed sumen +2.",
+  presetsTitle:"Pentinats can\u00f2nics",
+  pLabelDouble:"Remol\u00ed doble",
+  st_p_poles:"Font i desgu\u00e0s: el p\u00e8l va de pol a pol. Dos remolins de +1, com z a prop de cadascun.",
+  st_p_swirl:"Dos v\u00f2rtexs que giren, +1 cadascun. A prop dels pols el camp \u00e9s com iz, un z girat 90\u00b0.",
+  st_p_double:"Tot el gir concentrat en un sol nus d\u2019\u00edndex +2, com z\u00b2. La resta queda llisa.",
+  btnAuto:"Gir autom\u00e0tic", presetsTitle2:"Del codi de gr\u00e0fics",
+  st_p_hm:"Hughes\u2013M\u00f6ller (1999): construeix un marc tangent des de la normal. La branca |x|>|z| deixa dues costures, dos remolins de +1.",
+  st_p_frisvad:"Frisvad (2012): el mateix sense normalitzar. El cas especial z<-1 amaga tot el defecte en un sol nus de +2 al pol."
 });
 
 let lang='ca';
@@ -476,7 +603,9 @@ let statusKey='start', statusN=0, lastCount=-1, statusLock=0;
 function renderStatus(){
   const T=I18N[lang];
   const map={start:T.st_start,reset:T.st_reset,sweep:T.st_sweep,
-             one:T.st_one,two:T.st_two,many:T.st_many(statusN)};
+             one:T.st_one,two:T.st_two,many:T.st_many(statusN),
+             p_poles:T.st_p_poles,p_swirl:T.st_p_swirl,p_double:T.st_p_double,
+             p_hm:T.st_p_hm,p_frisvad:T.st_p_frisvad};
   $('status').textContent=map[statusKey]||"";
 }
 function setStatus(key,n,lock){statusKey=key;if(n!=null)statusN=n;renderStatus();if(lock)statusLock=lock;}
@@ -492,6 +621,12 @@ function applyStatic(){
   $('intro').textContent=T.intro;
   $('sweep').textContent=T.btnSweep;
   $('reset').textContent=T.btnReset;
+  $('ptitle').textContent=T.presetsTitle;
+  $('pl_poles').textContent=T.pLabelPoles;
+  $('pl_swirl').textContent=T.pLabelSwirl;
+  $('pl_double').textContent=T.pLabelDouble;
+  $('auto').textContent=T.btnAuto;
+  $('ptitle2').textContent=T.presetsTitle2;
   $('whyBtn').innerHTML=T.whyToggle+'<span class="car">\u203a</span>';
   $('why').textContent=T.whyText;
   document.querySelectorAll('#lang button').forEach(b=>b.classList.toggle('on',b.dataset.l===lang));
@@ -511,6 +646,10 @@ $('mode').addEventListener('click',()=>{
   $('mode').setAttribute('aria-pressed',mode==='rotate');
   refreshModeUI();
 });
+$('auto').addEventListener('click',()=>{
+  autoSpin=!autoSpin;
+  $('auto').setAttribute('aria-pressed',autoSpin);
+});
 $('reset').addEventListener('click',()=>{seedField();touched=false;autoT=0;lastCount=-1;setStatus('reset',null,30);});
 $('sweep').addEventListener('click',()=>{           // comb everything one way -> fountain
   const axis=norm([0.1,1,0.05]);
@@ -518,8 +657,27 @@ $('sweep').addEventListener('click',()=>{           // comb everything one way -
   // then bias strongly toward one pole to dramatise the swirl piling up
   for(let i=0;i<N;i++){const tgt=projT(V[i],[0,-1,0]);if(len(tgt)>0.4)
     dirs[i]=projT(V[i],[dirs[i][0]*0.25+tgt[0]*0.75,dirs[i][1]*0.25+tgt[1]*0.75,dirs[i][2]*0.25+tgt[2]*0.75]);}
-  touched=true;autoT=0;lastCount=-1;setStatus('sweep',null,30);
+  touched=true;autoT=0;lastCount=-1;setStatus('sweep',null,30);relax=14;
 });
+
+// canonical combings: each is a legal field whose indices still total +2
+function faceCowlick(){               // turn the view toward the first defect
+  detect(); if(!cowlicks.length) return;
+  const c=cowlicks[0].c;
+  camPhi=clamp(Math.acos(clamp(c[1],-1,1)),0.18,PI-0.18);
+  camTheta=Math.atan2(c[2],c[0]); placeCamera();
+}
+function applyPreset(name){
+  if(name==='poles')seedSourceSink();
+  else if(name==='double')seedDouble();
+  else if(name==='hm')seedHughesMoller();
+  else if(name==='frisvad')seedFrisvad();
+  else seedField();                          // 'swirl' = the default double vortex
+  touched=true;autoT=0;lastCount=-1;setStatus('p_'+name,null,90);
+  faceCowlick();
+}
+document.querySelectorAll('.prow button').forEach(b=>
+  b.addEventListener('click',()=>applyPreset(b.dataset.preset)));
 
 // ===================================================================
 //  Status copy reacts to cowlick count
@@ -546,9 +704,8 @@ let frame=0;
 function loop(){
   requestAnimationFrame(loop);
   frame++;
-  // idle slow spin when nothing is being touched
-  if(ptrs.size===0 && !reduce){ autoT++; if(autoT>40){ camTheta+=0.0016; placeCamera(); } }
-  smooth();
+  if(autoSpin && ptrs.size===0){ camTheta+=0.0016; placeCamera(); }
+  if(relax>0){ smooth(); relax--; }
   if(frame%6===0){ detect(); syncUI(); updateStatus(); }
   // markers — fade the ones that have run to the far side
   for(let i=0;i<markers.length;i++) if(markers[i]) markers[i].visible=false;
