@@ -1,155 +1,226 @@
 <!doctype html>
-<html lang="en">
+<html lang="ca">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-<title>Comb the Hedgehog</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Space+Mono:wght@400;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pentina l’eriçó: el teorema de la bola peluda</title>
+<meta name="description" content="Prova de pentinar una esfera peluda sense deixar cap remolí. No es pot, i ho diu un teorema, el de la bola peluda. Un joc d’El Gegant del π, el blog de divulgació del Centre de Recerca Matemàtica.">
+<meta name="theme-color" content="#a5082e">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="ca_ES">
+<meta property="og:site_name" content="El Gegant del π">
+<meta property="og:title" content="Pentina l’eriçó">
+<meta property="og:description" content="Prova de pentinar una esfera peluda sense deixar cap remolí. No es pot, i ho diu un teorema, el de la bola peluda.">
+<meta property="og:url" content="https://maebase-netizen.github.io/hairy_ball_theorem/">
+<meta property="og:image" content="https://maebase-netizen.github.io/hairy_ball_theorem/img/pentina-l-erico.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Pentina l’eriçó. Una esfera coberta de pèl amb un remolí encès, i la suma dels índexs, que sempre fa 2.">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://maebase-netizen.github.io/hairy_ball_theorem/">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23a5082e'/%3E%3Ctext x='32' y='47' font-family='Georgia,serif' font-size='46' text-anchor='middle' fill='%23ffffff'%3E%CF%80%3C/text%3E%3C/svg%3E">
 <style>
-  :root{
-    --bg0:#0b0c11; --bg1:#15161e;
-    --ink:#e7e3d8; --mute:#8b8a86; --line:#2a2b35;
-    --ember:#ea7613; --core:#a5082e;
-    --ok:#d8d2c2;
-  }
-  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
-  html,body{margin:0;height:100%;overflow:hidden;background:var(--bg0);color:var(--ink)}
-  #c{position:fixed;inset:0;display:block;touch-action:none}
-  #ui{position:fixed;inset:0;pointer-events:none;display:flex;flex-direction:column;justify-content:space-between}
-  .pad{padding:clamp(14px,3vw,30px)}
-  header h1{
-    font-family:"Fraunces",Georgia,serif;font-weight:600;
-    font-size:clamp(22px,4.4vw,40px);line-height:1.0;margin:0;letter-spacing:-.01em;
-  }
-  header p{
-    font-family:"Inter",system-ui,sans-serif;color:var(--mute);
-    margin:.5em 0 0;max-width:30ch;font-size:clamp(12px,2.4vw,14px);line-height:1.45;
-  }
-  /* instrument readout */
-  #panel{
-    pointer-events:none;align-self:flex-start;margin-top:14px;
-    border:1px solid var(--line);border-radius:12px;
-    background:rgba(14,15,21,.55);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);
-    padding:12px 14px 13px;min-width:210px;
-  }
-  #panel .row{display:flex;align-items:baseline;gap:10px}
-  #swirl{font-family:"Space Mono",monospace;font-weight:700;font-size:clamp(30px,6vw,44px);line-height:1;color:var(--ember)}
-  #swirl small{font-size:.42em;color:var(--mute);font-weight:400;letter-spacing:.08em}
-  .lab{font-family:"Inter",sans-serif;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute)}
-  #sub{font-family:"Space Mono",monospace;font-size:12.5px;color:var(--ink);margin-top:9px}
-  #whyBtn{pointer-events:auto;display:inline-flex;align-items:center;gap:5px;margin-top:10px;
-    padding:0;border:0;background:none;backdrop-filter:none;cursor:pointer;
-    font-family:"Inter",sans-serif;font-size:11.5px;letter-spacing:.02em;color:var(--mute)}
-  #whyBtn:hover{color:var(--ink)}
-  #whyBtn .car{transition:transform .2s ease;font-size:13px;line-height:1}
-  #whyBtn[aria-expanded="true"] .car{transform:rotate(90deg)}
-  #whyBtn:focus-visible{outline:2px solid var(--ember);outline-offset:3px;border-radius:3px}
-  #why{margin-top:9px;max-width:30ch;font-family:"Inter",sans-serif;font-size:12px;
-    line-height:1.5;color:var(--mute);border-top:1px solid var(--line);padding-top:9px}
-  #why[hidden]{display:none}
-  /* bottom controls */
-  #dock{pointer-events:none;display:flex;flex-direction:column;gap:12px}
-  #status{
-    font-family:"Fraunces",serif;font-style:italic;font-size:clamp(14px,3vw,19px);
-    color:var(--ok);max-width:34ch;min-height:1.4em;line-height:1.3;
-    text-shadow:0 1px 18px rgba(0,0,0,.6)
-  }
-  #btns{display:flex;flex-wrap:wrap;gap:9px;pointer-events:auto}
-  button{
-    pointer-events:auto;font-family:"Inter",sans-serif;font-size:13px;font-weight:500;
-    color:var(--ink);background:rgba(20,21,28,.7);border:1px solid var(--line);
-    border-radius:999px;padding:9px 15px;cursor:pointer;backdrop-filter:blur(6px);
-    transition:border-color .15s, color .15s, background .15s;
-  }
-  button:hover{border-color:#4a4b58}
-  button:active{transform:translateY(1px)}
-  button[aria-pressed="true"]{background:var(--ink);color:#15161e;border-color:var(--ink)}
-  button:focus-visible{outline:2px solid var(--ember);outline-offset:2px}
-  .prow{display:flex;flex-wrap:wrap;gap:8px;pointer-events:auto}
-  .prow button{display:flex;flex-direction:column;align-items:flex-start;gap:1px;
-    padding:7px 13px;line-height:1.16;text-align:left}
-  .prow button .pl{font-weight:500}
-  .prow button .pf{font-family:"Space Mono",monospace;font-size:11px;
-    color:var(--mute);letter-spacing:.01em}
-  .prow button:hover .pf{color:var(--ok)}
-  .ptitle{font-family:"Inter",sans-serif;font-size:10.5px;letter-spacing:.14em;
-    text-transform:uppercase;color:var(--mute);margin:2px 0 -2px}
-  .hint{font-family:"Inter",sans-serif;font-size:11.5px;color:var(--mute)}
-  #lang{position:fixed;top:0;right:0;pointer-events:auto;display:flex;gap:0;
-    margin:clamp(14px,3vw,30px);border:1px solid var(--line);border-radius:999px;overflow:hidden;
-    background:rgba(20,21,28,.7);backdrop-filter:blur(6px)}
-  #lang button{border:0;border-radius:0;background:transparent;padding:7px 13px;
-    font-size:12px;letter-spacing:.06em;color:var(--mute);backdrop-filter:none}
-  #lang button.on{background:var(--ink);color:#15161e}
-  #lang button:focus-visible{outline-offset:-2px}
-  #vignette{position:fixed;inset:0;pointer-events:none;
-    background:radial-gradient(125% 95% at 50% 44%, rgba(0,0,0,0) 36%, rgba(5,5,9,.6) 100%)}
-  @media (max-width:540px){
-    header p{max-width:40ch}
-    #panel{padding:10px 12px 11px}
-    #status{max-width:30ch}
-    #btns button{padding:8px 13px}
-  }
+:root{--bg:#fff;--panel:#f4f3f3;--ink:#1d1d22;--muted:#5d6364;--rule:#e4e2e3;--red:#a5082e;--orange:#ea7613;
+  --display:Georgia,"Times New Roman",Times,serif;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono","Cascadia Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#17171b;--panel:#212127;--ink:#ecebec;--muted:#a9aeaf;--rule:#34343b;--red:#f2647d;color-scheme:dark}}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 var(--sans)}
+main{max-width:920px;margin:0 auto;padding:28px 16px 40px}
+a{color:var(--red);text-underline-offset:3px}
+cite{font-style:italic}
+:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
+
+/* header, shared with the other games of El Gegant del π */
+.head{display:grid;gap:10px}
+.eyebrow{margin:0;font:600 .75rem/1.2 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--red)}
+.eyebrow a{color:inherit;text-decoration:none}
+.eyebrow a:hover{text-decoration:underline}
+.nocase{text-transform:none;letter-spacing:0}
+h1{margin:0;font:400 clamp(2rem,5.2vw,2.8rem)/1.08 var(--display);letter-spacing:-.01em}
+.lede{margin:0;max-width:60ch;font-size:1.06rem;color:var(--muted)}
+.intro-box{display:grid;gap:12px;max-width:68ch;margin-top:12px;padding:18px 20px;background:var(--panel);border-left:3px solid var(--red)}
+.intro-box p{margin:0}
+.intro-box a{font-weight:600}
+
+/* the game */
+.stage{margin-top:32px;display:grid;gap:16px}
+.view{position:relative;height:clamp(380px,72vh,640px);border-radius:12px;overflow:hidden;background:#0b0c11;color:#e7e3d8;isolation:isolate}
+@media (max-width:600px){.view{height:min(94vw,66vh)}}
+#c{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:crosshair}
+#c.rotating{cursor:grab}
+#c:focus-visible{outline:2px solid var(--orange);outline-offset:-2px}
+.vignette{position:absolute;inset:0;pointer-events:none;background:radial-gradient(120% 95% at 50% 46%,rgba(0,0,0,0) 40%,rgba(5,5,9,.55) 100%)}
+.labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.ix{position:absolute;left:0;top:0;padding:3px 7px;border:1px solid rgba(234,118,19,.75);border-radius:999px;background:rgba(11,12,17,.75);color:#ffd2a1;font:700 13px/1 var(--mono);white-space:nowrap;will-change:transform}
+.ix.neg{border-color:rgba(205,222,240,.75);color:#e3edf7}
+.panel{position:absolute;left:12px;top:12px;max-width:min(290px,calc(100% - 76px));padding:10px 12px 11px;border:1px solid #2a2b35;border-radius:10px;background:rgba(14,15,21,.8);font-family:var(--sans)}
+.row{display:flex;align-items:baseline;gap:9px}
+#swirl{font:700 34px/1 var(--mono);color:var(--orange)}
+.lab{font:600 10.5px/1.25 var(--sans);letter-spacing:.13em;text-transform:uppercase;color:#a6a5a0}
+#sub{margin-top:6px;font:12.5px/1.35 var(--mono);color:#e7e3d8}
+#whyBtn{margin-top:8px;padding:0;border:0;background:none;color:#a6a5a0;font:500 12px/1.2 var(--sans);cursor:pointer;display:inline-flex;gap:5px;align-items:center}
+#whyBtn:hover{color:#fff}
+#whyBtn .car{display:inline-block;transition:transform .2s ease}
+#whyBtn[aria-expanded="true"] .car{transform:rotate(90deg)}
+#why{margin-top:8px;padding-top:8px;border-top:1px solid #2a2b35;font-size:12.5px;line-height:1.5;color:#cfccc4}
+#why[hidden]{display:none}
+#why a{color:#ffb27a}
+.zoom{position:absolute;right:12px;top:12px;display:grid;gap:6px}
+.zoom button{width:36px;height:36px;padding:0;border:1px solid #3a3b47;border-radius:50%;background:rgba(20,21,28,.82);color:#e7e3d8;font:600 19px/1 var(--sans);cursor:pointer}
+.zoom button:hover{border-color:#6a6b78}
+.status{position:absolute;left:0;right:0;bottom:0;margin:0;padding:30px 14px 12px;background:linear-gradient(to top,rgba(5,5,9,.85),rgba(5,5,9,0));color:#efe9dc;font:italic 400 clamp(15px,2.4vw,18px)/1.35 var(--display);pointer-events:none}
+.nogl{position:absolute;inset:0;display:grid;place-items:center;padding:24px;text-align:center;color:#e7e3d8}
+.nogl[hidden]{display:none}
+
+.controls{display:grid;gap:14px}
+.btns,.prow{display:flex;flex-wrap:wrap;gap:8px}
+.controls button{-webkit-appearance:none;appearance:none;min-height:40px;margin:0;padding:8px 14px;border:1px solid var(--ink);border-radius:2px;background:var(--bg);color:var(--ink);font:600 .9rem/1.15 var(--sans);cursor:pointer}
+.controls button:hover{background:var(--panel)}
+.controls button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.controls button:disabled{opacity:.45;cursor:default}
+.prow button{display:flex;flex-direction:column;align-items:flex-start;gap:3px;text-align:left}
+.prow .pf{font:500 .76rem/1.2 var(--mono);color:var(--muted)}
+.ptitle{margin:0 0 7px;font:600 .75rem/1.2 var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.hint{margin:0;max-width:72ch;font-size:.88rem;color:var(--muted)}
+
+/* explanation */
+.prose{max-width:68ch;margin-top:48px}
+.prose h2{margin:36px 0 12px;padding-bottom:8px;border-bottom:2px solid var(--red);font:400 1.5rem/1.2 var(--display);color:var(--red)}
+.prose h2:first-child{margin-top:0}
+.prose p{margin:0 0 14px}
+.prose .eq{font-family:var(--display);font-size:1.08rem;white-space:nowrap}
+.foot{display:grid;gap:8px;margin-top:40px;padding-top:12px;border-top:1px solid var(--rule);font-size:.85rem;color:var(--muted)}
+.foot p{margin:0}
+.more{display:flex;flex-wrap:wrap;gap:4px 16px}
+.more span{font-weight:600;letter-spacing:.1em;text-transform:uppercase}
+.more a{font-weight:600;text-decoration:none}
+.more a:hover{text-decoration:underline}
+@media (max-width:520px){
+  .intro-box{padding:14px 16px}
+  .prose h2{font-size:1.3rem}
+  .panel{left:8px;top:8px;padding:7px 9px 8px}
+  #swirl{font-size:26px}
+  .lab{font-size:9.5px}
+  #sub{margin-top:4px;font-size:11.5px}
+  #whyBtn{margin-top:5px;font-size:11px}
+  .zoom{right:8px;top:8px}
+  .zoom button{width:32px;height:32px}
+}
+@media (prefers-reduced-motion:reduce){#whyBtn .car{transition:none}}
 </style>
 </head>
 <body>
-<canvas id="c"></canvas>
-<div id="vignette"></div>
-<div id="lang">
-  <button data-l="ca" class="on">CA</button>
-  <button data-l="en">EN</button>
-</div>
-<div id="ui">
-  <div class="pad">
-    <header>
-      <h1 id="title">Pentina l’eriçó</h1>
-      <p id="intro">Arrossega pel pèl per aplanar-lo. En algun lloc sempre sobreviurà un remolí. És un teorema, no pas un nivell de dificultat.</p>
-    </header>
-    <div id="panel">
-      <div class="row">
-        <div id="swirl">+2<small>&nbsp;REMOLÍ TOTAL</small></div>
-      </div>
+<main>
+<header class="head">
+  <p class="eyebrow"><a href="https://crmatematica.wordpress.com/">El Gegant del <span class="nocase">π</span></a> · Interactiu</p>
+  <h1>Pentina l’eriçó</h1>
+  <p class="lede">Arrossega pel pèl per aplanar-lo. En algun lloc sempre sobreviurà un remolí. És un teorema, no pas un nivell de dificultat.</p>
+  <div class="intro-box">
+    <p>Aquest eriçó és una esfera coberta de pèl, i el joc consisteix a pentinar-lo ben pla, sense cap clapa ni cap floc dret. No es pot fer. Ho garanteix el teorema de la bola peluda, que a Europa de vegades es diu teorema de l’eriçó i que Henri Poincaré va demostrar el 1885. L’expliquem a l’article <a href="https://crmatematica.wordpress.com/2026/07/09/la-bola-que-et-pren-el-pel/">«La bola que et pren el pèl»</a>, publicat a <cite>El Gegant del π</cite>, el blog de divulgació del Centre de Recerca Matemàtica.</p>
+    <p>Arrossega el dit o el ratolí per sobre del pèl i mira què fan els remolins, els punts que brillen. Cadascun porta un número, el seu índex, i el panell de dalt els suma. Els pots arraconar, ajuntar i fins i tot partir en trossos, però la suma sempre fa +2. Més avall t’expliquem d’on surt aquest 2.</p>
+  </div>
+</header>
+
+<section class="stage" aria-label="El joc">
+  <div class="view" id="view">
+    <canvas id="c" tabindex="0" aria-label="Eriçó en 3D. Arrossega per pentinar-lo. Amb les fletxes del teclat el gires i amb + i − t’hi acostes."></canvas>
+    <div class="vignette"></div>
+    <div class="labels" id="labels" aria-hidden="true"></div>
+    <div class="panel" id="panel">
+      <div class="row"><span id="swirl">+2</span><span class="lab">suma dels índexs</span></div>
       <div id="sub">remolins: 2</div>
-      <button id="whyBtn" aria-expanded="false">d’on surt el +2?<span class="car">›</span></button>
-      <div id="why" hidden>El +2 és la característica d’Euler de l’esfera: depèn només de la forma, no de com pentinis. El teorema de Poincaré–Hopf obliga els remolins a sumar-lo sempre, així que mai no els pots eliminar tots.</div>
+      <button type="button" id="whyBtn" aria-expanded="false" aria-controls="why">d’on surt el +2? <span class="car" aria-hidden="true">›</span></button>
+      <div id="why" hidden>El +2 és la característica d’Euler de l’esfera. Depèn només de la forma, no de com pentinis. El teorema de Poincaré-Hopf obliga els índexs dels remolins a sumar-lo sempre, així que mai no els pots eliminar tots. <a href="#com-funciona">Més detalls a sota.</a></div>
     </div>
+    <div class="zoom">
+      <button type="button" id="zin" aria-label="Acosta’t a l’eriçó">+</button>
+      <button type="button" id="zout" aria-label="Allunya’t de l’eriçó">&minus;</button>
+    </div>
+    <p class="status" id="status" aria-live="polite">Pentina’l ben pla. No te’n sortiràs.</p>
+    <div class="nogl" id="nogl" hidden><p>El teu navegador no pot mostrar gràfics en 3D (WebGL), i sense ells l’eriçó no surt. Prova-ho amb un altre navegador o un altre dispositiu.</p></div>
   </div>
 
-  <div class="pad" id="dock">
-    <div id="status">Pentina’l ben pla. No te’n sortiràs.</div>
-    <div id="btns">
-      <button id="mode" aria-pressed="false">Gira la vista</button>
-      <button id="auto" aria-pressed="false">Gir automatic</button>
-      <button id="sweep">Pentina recte</button>
-      <button id="reset">Pèl nou</button>
+  <div class="controls">
+    <div class="btns">
+      <button type="button" id="mode" aria-pressed="false">Gira la vista</button>
+      <button type="button" id="auto" aria-pressed="false">Gir automàtic</button>
+      <button type="button" id="sweep">Pentina recte</button>
+      <button type="button" id="reset">Pèl nou</button>
     </div>
-    <div class="ptitle" id="ptitle">Pentinats canonics</div>
-    <div id="presets" class="prow">
-      <button data-preset="poles"><span class="pl" id="pl_poles">Pol a pol</span><span class="pf">z &middot; +1, +1</span></button>
-      <button data-preset="swirl"><span class="pl" id="pl_swirl">Doble gir</span><span class="pf">iz &middot; +1, +1</span></button>
-      <button data-preset="double"><span class="pl" id="pl_double">Remoli doble</span><span class="pf">z&sup2; &middot; +2</span></button>
+    <div>
+      <p class="ptitle">Pentinats canònics</p>
+      <div class="prow">
+        <button type="button" data-preset="poles"><span>Pol a pol</span><span class="pf">+1 i +1</span></button>
+        <button type="button" data-preset="swirl"><span>Doble gir</span><span class="pf">+1 i +1</span></button>
+        <button type="button" data-preset="double"><span>Remolí doble</span><span class="pf">+2</span></button>
+      </div>
     </div>
-    <div class="ptitle" id="ptitle2">Del codi de grafics</div>
-    <div id="presets2" class="prow">
-      <button data-preset="hm"><span class="pl">Hughes–Möller</span><span class="pf">b1 = b2 × n · +1, +1</span></button>
-      <button data-preset="frisvad"><span class="pl">Frisvad</span><span class="pf">a = 1/(1+z) · +2</span></button>
+    <div>
+      <p class="ptitle">Del codi de gràfics 3D</p>
+      <div class="prow">
+        <button type="button" data-preset="hm"><span>Hughes-Möller</span><span class="pf">1999 · +1 i +1</span></button>
+        <button type="button" data-preset="frisvad"><span>Frisvad</span><span class="pf">2012 · +2</span></button>
+      </div>
     </div>
-    <div class="hint" id="hint">Consell: busca un remolí encès i pentina-hi just per sobre. Mira on s’escapa.</div>
+    <p class="hint" id="hint">Arrossega per pentinar. Per girar l’eriçó, fes servir el botó dret, dos dits o «Gira la vista». Busca un remolí encès i pentina-hi just per sobre, a veure on s’escapa.</p>
   </div>
-</div>
+</section>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<section class="prose" id="com-funciona">
+  <h2>Per què no es pot pentinar</h2>
+  <p>Imagina cada pèl com una fletxeta que jeu sobre la pell i apunta cap a algun costat. Pentinar bé vol dir dues coses alhora. Que totes les fletxes jeguin, sense cap que s’aixequi ni cap clapa pelada, i que la direcció canviï a poc a poc d’un punt al del costat, sense ratlles on el pèl salti de cop. Els matemàtics en diuen un camp vectorial tangent, continu i que no s’anul·la enlloc, i sobre una esfera no n’hi ha cap. Henri Poincaré ho va demostrar el 1885 per a la superfície d’una pilota, i Luitzen Brouwer ho va estendre el 1912 a les esferes de qualsevol dimensió parella.</p>
+  <p>Al teu cap sí que te’n surts, perquè té una vora, el naixement dels cabells, on amagar el desori. L’eriçó no en té cap.</p>
+
+  <h2>Remolins amb número</h2>
+  <p>Allà on la pinta fracassa hi ha un remolí, i cada remolí té un índex. Per calcular-lo, imagina que hi fas la volta per un cercle petit, en sentit contrari a les agulles del rellotge, i compta quantes voltes fa el pèl mentre camines. Si en fa una en el mateix sentit, l’índex és +1. Passa a les fonts, d’on el pèl raja cap enfora, als embornals, que s’ho empassen tot, i als vòrtexs, on el pèl gira com l’aigua d’una pica. Si la volta va a l’inrevés, l’índex és −1, i tens un punt de sella, on el pèl arriba per dues bandes i se’n va per les altres dues. Si en fa dues, +2. Al joc, els remolins positius brillen en taronja i els negatius, en blanc.</p>
+
+  <h2>D’on surt el 2</h2>
+  <p>Suma els índexs de tots els remolins de l’eriçó i et donarà 2, pentinis com pentinis. És el teorema de Poincaré-Hopf, que lliga aquesta suma a un nombre que depèn només de la forma de la superfície, la seva característica d’Euler. Per a una esfera val 2, i ho pots comprovar sense pèl. Dibuixa un mapa qualsevol sobre una taronja, compta els vèrtexs on es troben les fronteres (<i>V</i>), els trams de frontera (<i>E</i>) i els països, mar inclòs (<i>F</i>), i calcula <span class="eq"><i>V</i> − <i>E</i> + <i>F</i></span>. Surt 2 cada vegada.</p>
+  <p>Com que la suma ha de fer 2, i no 0, no hi ha manera de quedar-se sense remolins. Un dònut, en canvi, té característica 0, i aquest sí que es deixa pentinar sencer.</p>
+
+  <h2>Pentinats de manual</h2>
+  <p>Els tres primers botons carreguen pentinats clàssics. «Pol a pol» fa sortir el pèl per un punt i el fa entrar per l’oposat, amb una font i un embornal de +1 cadascun. «Doble gir» hi posa dos vòrtexs, també de +1. «Remolí doble» ho concentra tot en un sol punt d’índex +2, i la resta de l’eriçó queda llisa com un mirall.</p>
+
+  <h2>Els programes de gràfics també ho pateixen</h2>
+  <p>Els programes que dibuixen en 3D necessiten sovint, a cada punt d’una superfície, una direcció que hi jegui al damunt, per orientar-hi una textura, un pèl o un reflex. Hi ha receptes publicades per calcular-la a partir de la direcció perpendicular a la superfície, i el teorema garanteix que cap no pot anar bé a tota l’esfera. La de John Hughes i Tomas Möller (1999) canvia de fórmula a mig camí, i el pèl salta de cop al llarg de dues costures, on apareixen dos remolins de +1. La de Jeppe Revall Frisvad (2012), més ràpida, es trenca en un sol punt, on <i>z</i> = −1, i el cas especial que la tapa hi concentra tot el defecte en un nus de +2.</p>
+  <p>A l’article hi ha la resta de la història, des del punt de la Terra on no bufa el vent fins a la forma de dònut dels reactors de fusió.</p>
+</section>
+
+<footer class="foot">
+  <p>Fet per a <a href="https://crmatematica.wordpress.com/"><cite>El Gegant del π</cite></a> · Centre de Recerca Matemàtica · 2026. Gràfics amb three.js.</p>
+  <nav class="more" aria-label="Més jocs d’El Gegant del π"><span>Més jocs</span>
+    <a href="https://maebase-netizen.github.io/laboratori_basilea/">Laboratori de Basilea</a>
+    <a href="https://maebase-netizen.github.io/dotze_oscilladors/">Els dotze oscil·ladors</a>
+    <a href="https://maebase-netizen.github.io/pi_de_memoria/">Pi de memòria</a>
+  </nav>
+</footer>
+</main>
+
+<script src="vendor/three.min.js"></script>
 <script>
 /* ------------------------------------------------------------------ *
- *  Comb the Hedgehog — the hairy ball theorem you can lose to.
- *  Per-face index of the tangent field always sums to +2 (Euler char
- *  of the sphere). Verified in node before shipping: combing + smoothing
- *  relocate the cowlicks but never destroy them.
+ *  Pentina l’eriçó: the hairy ball theorem you can lose to.
+ *  The index of every face of the mesh is the winding of the hair around
+ *  it. Each edge’s turn is computed once and used with opposite signs by
+ *  its two faces, so the indices add up to the Euler characteristic of the
+ *  sphere, +2, exactly, however wild the combing gets.
  * ------------------------------------------------------------------ */
 (function(){
 "use strict";
+const $ = id => document.getElementById(id);
+const view = $('view'), canvas = $('c');
+
+function noGL(){
+  $('nogl').hidden = false;
+  canvas.hidden = true;
+  ['panel','labels','status'].forEach(id => { $(id).hidden = true; });
+  document.querySelectorAll('.controls button, .zoom button').forEach(b => { b.disabled = true; });
+}
+if (!window.THREE) { noGL(); return; }
 
 // ---------- tiny vec3 helpers (plain arrays for the field math) ----------
 const add=(a,b)=>[a[0]+b[0],a[1]+b[1],a[2]+b[2]];
@@ -161,7 +232,7 @@ const len=a=>Math.hypot(a[0],a[1],a[2]);
 const clamp=(v,lo,hi)=>v<lo?lo:(v>hi?hi:v);
 const norm=a=>{const l=len(a);return l>1e-12?[a[0]/l,a[1]/l,a[2]/l]:[0,0,0];};
 const projT=(p,d)=>{const k=dot(d,p);return norm([d[0]-k*p[0],d[1]-k*p[1],d[2]-k*p[2]]);};
-function transport(t,q,p){ // parallel-transport tangent t at q onto p
+function transport(t,q,p){ // carry tangent t at q to p, rotating along the great circle
   const ax=cross(q,p); const s=len(ax); const c=dot(q,p);
   if(s<1e-9) return c>0?t:mul(t,-1);
   const k=[ax[0]/s,ax[1]/s,ax[2]/s], kt=dot(k,t);
@@ -169,8 +240,10 @@ function transport(t,q,p){ // parallel-transport tangent t at q onto p
            t[1]*c+(k[2]*t[0]-k[0]*t[2])*s+k[1]*kt*(1-c),
            t[2]*c+(k[0]*t[1]-k[1]*t[0])*s+k[2]*kt*(1-c) ];
 }
+const PI=Math.PI, TAU=2*Math.PI;
+const wrap=a=>a-TAU*Math.round(a/TAU);   // to [-pi, pi]
 
-// ---------- icosphere with shared vertices + faces ----------
+// ---------- icosphere with shared vertices, faces counter-clockwise seen from outside ----------
 function icosphere(detail){
   const t=(1+Math.sqrt(5))/2;
   let V=[[-1,t,0],[1,t,0],[-1,-t,0],[1,-t,0],[0,-1,t],[0,1,t],
@@ -184,25 +257,11 @@ function icosphere(detail){
   for(let d=0;d<detail;d++){const nf=[];for(const f of F){
     const a=mid(f[0],f[1]),b=mid(f[1],f[2]),c=mid(f[2],f[0]);
     nf.push([f[0],a,c],[f[1],b,a],[f[2],c,b],[a,b,c]);}F=nf;}
-  // adjacency
-  const adj=V.map(()=>new Set());
-  for(const f of F){for(let i=0;i<3;i++){adj[f[i]].add(f[(i+1)%3]);adj[f[i]].add(f[(i+2)%3]);}}
-  return {V,F,adj:adj.map(s=>[...s])};
-}
-
-// ---------- stable tangent basis + face index ----------
-function basisAngle(t,p){
-  const ref = Math.abs(p[2])<0.9 ? [0,0,1] : [1,0,0];
-  const e1=projT(p,ref); const e2=cross(p,e1);
-  return Math.atan2(dot(t,e2),dot(t,e1));
-}
-const wrap=a=>{while(a>Math.PI)a-=2*Math.PI;while(a<-Math.PI)a+=2*Math.PI;return a;};
-function faceIndex(f,dirs,V){
-  const pa=V[f[0]],pb=V[f[1]],pc=V[f[2]];
-  const Aa=basisAngle(dirs[f[0]],pa);
-  const Ab=basisAngle(transport(dirs[f[1]],pb,pa),pa);
-  const Ac=basisAngle(transport(dirs[f[2]],pc,pa),pa);
-  return Math.round((wrap(Ab-Aa)+wrap(Ac-Ab)+wrap(Aa-Ac))/(2*Math.PI));
+  for(const f of F){
+    const n=cross(sub(V[f[1]],V[f[0]]),sub(V[f[2]],V[f[0]]));
+    if(dot(n,add(add(V[f[0]],V[f[1]]),V[f[2]]))<0){const s=f[1];f[1]=f[2];f[2]=s;}
+  }
+  return {V,F};
 }
 
 // ===================================================================
@@ -211,8 +270,45 @@ function faceIndex(f,dirs,V){
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const small  = innerWidth<760 || matchMedia('(pointer:coarse)').matches;
 const DETAIL = small?4:5;            // 2562 hairs on phones, 10242 on desktop
-const {V,F,adj} = icosphere(DETAIL);
-const N=V.length;
+const {V,F} = icosphere(DETAIL);
+const N=V.length, NF=F.length;
+
+// a fixed tangent frame (e1, e2) at every vertex; hair directions are read as angles in it
+const E1=new Float64Array(N*3), E2=new Float64Array(N*3);
+for(let i=0;i<N;i++){
+  const p=V[i], ref=Math.abs(p[2])<0.9?[0,0,1]:[1,0,0];
+  const e1=projT(p,ref), e2=cross(p,e1);
+  E1.set(e1,i*3); E2.set(e2,i*3);
+}
+// edges: each one stores how much the frame turns when carried from its end b to its end a
+const edgeOf=new Map(), EA=[], EB=[], ERHO=[];
+const FE=new Int32Array(NF*3), FS=new Int8Array(NF*3);
+function rhoOf(a,b){
+  const t=transport([E1[b*3],E1[b*3+1],E1[b*3+2]],V[b],V[a]);
+  return Math.atan2(t[0]*E2[a*3]+t[1]*E2[a*3+1]+t[2]*E2[a*3+2], t[0]*E1[a*3]+t[1]*E1[a*3+1]+t[2]*E1[a*3+2]);
+}
+for(let f=0;f<NF;f++){
+  const tri=F[f];
+  for(let k=0;k<3;k++){
+    const u=tri[k], v=tri[(k+1)%3], a=Math.min(u,v), b=Math.max(u,v), key=a*N+b;
+    let e=edgeOf.get(key);
+    if(e===undefined){ e=EA.length; edgeOf.set(key,e); EA.push(a); EB.push(b); ERHO.push(rhoOf(a,b)); }
+    FE[f*3+k]=e; FS[f*3+k]=(u===a)?1:-1;
+  }
+}
+const NE=EA.length;
+// neighbours of every vertex, with the frame turn towards it (compressed rows)
+const deg=new Int32Array(N);
+for(let e=0;e<NE;e++){deg[EA[e]]++;deg[EB[e]]++;}
+const NB0=new Int32Array(N+1); for(let i=0;i<N;i++)NB0[i+1]=NB0[i]+deg[i];
+const NBJ=new Int32Array(NB0[N]), NBR=new Float64Array(NB0[N]), fill=NB0.slice(0,N);
+for(let e=0;e<NE;e++){
+  const a=EA[e], b=EB[e];
+  NBJ[fill[a]]=b; NBR[fill[a]++]=ERHO[e];
+  NBJ[fill[b]]=a; NBR[fill[b]++]=-ERHO[e];
+}
+const faceC=new Float64Array(NF*3);
+for(let f=0;f<NF;f++){const c=norm(add(add(V[F[f][0]],V[F[f][1]]),V[F[f][2]]));faceC.set(c,f*3);}
 
 const Rroot=1.0, HAIR=small?0.066:0.05;
 const hairLen=new Float32Array(N);
@@ -220,88 +316,144 @@ for(let i=0;i<N;i++) hairLen[i]=HAIR*(0.78+0.5*Math.abs(Math.sin(V[i][0]*9+V[i][
 
 // ---- extra VISUAL hairs, interpolated inside each face ------------------
 // Denser fur without touching the physics: the field (dirs), the smoothing
-// and the cowlick detection still live on the V/F mesh; these hairs only
-// read it. SUBH = hairs added per triangle; lower it if a weak device lags.
+// and the cowlick detection still live on the V/F mesh; these hairs only read it.
 const SUBH = small?1:2;
 const BARY = ({
   1:[[0.3334,0.3333,0.3333]],
-  2:[[0.56,0.26,0.18],[0.20,0.30,0.50]],
-  3:[[0.52,0.30,0.18],[0.22,0.52,0.26],[0.28,0.18,0.54]]
-})[SUBH] || [[0.3334,0.3333,0.3333]];
-const xA=[],xB=[],xC=[],xWA=[],xWB=[],xWC=[],xBX=[],xBY=[],xBZ=[],xLEN=[];
-for(const f of F){ const a=f[0],b=f[1],c=f[2];
-  for(let s=0;s<BARY.length;s++){ const wa=BARY[s][0],wb=BARY[s][1],wc=BARY[s][2];
-    let bx=V[a][0]*wa+V[b][0]*wb+V[c][0]*wc;
-    let by=V[a][1]*wa+V[b][1]*wb+V[c][1]*wc;
-    let bz=V[a][2]*wa+V[b][2]*wb+V[c][2]*wc;
+  2:[[0.56,0.26,0.18],[0.20,0.30,0.50]]
+})[SUBH];
+const XN=NF*BARY.length, HAIRS=N+XN;
+const xA=new Int32Array(XN), xB=new Int32Array(XN), xC=new Int32Array(XN);
+const xW=new Float32Array(XN*3), xP=new Float32Array(XN*3), xLEN=new Float32Array(XN);
+{ let k=0;
+  for(const f of F){ for(const w of BARY){
+    let bx=V[f[0]][0]*w[0]+V[f[1]][0]*w[1]+V[f[2]][0]*w[2];
+    let by=V[f[0]][1]*w[0]+V[f[1]][1]*w[1]+V[f[2]][1]*w[2];
+    let bz=V[f[0]][2]*w[0]+V[f[1]][2]*w[1]+V[f[2]][2]*w[2];
     const L=Math.hypot(bx,by,bz)||1; bx/=L;by/=L;bz/=L;
-    xA.push(a);xB.push(b);xC.push(c);xWA.push(wa);xWB.push(wb);xWC.push(wc);
-    xBX.push(bx);xBY.push(by);xBZ.push(bz);
-    xLEN.push(HAIR*(0.78+0.5*Math.abs(Math.sin(bx*9+by*7+bz*5))));
-  }
-}
-const XN=xA.length, HAIRS=N+XN;
+    xA[k]=f[0];xB[k]=f[1];xC[k]=f[2]; xW.set(w,k*3); xP[k*3]=bx;xP[k*3+1]=by;xP[k*3+2]=bz;
+    xLEN[k]=HAIR*(0.78+0.5*Math.abs(Math.sin(bx*9+by*7+bz*5))); k++;
+  } } }
 
-// field: tilted swirl -> two visible cowlicks to attack
-let dirs=new Array(N);
+// the field: one unit tangent vector per vertex
+const dirs=new Array(N);
+for(let i=0;i<N;i++) dirs[i]=[0,0,0];
+function setDir(i,v){ const d=dirs[i]; d[0]=v[0]; d[1]=v[1]; d[2]=v[2]; }
+// tilted swirl: two vortices to attack
 function seedField(){
   const axis=norm([0.35,0.82,0.45]);
-  for(let i=0;i<N;i++) dirs[i]=projT(V[i],cross(axis,V[i]));
+  for(let i=0;i<N;i++) setDir(i,projT(V[i],cross(axis,V[i])));
 }
-// source (-axis) + sink (+axis): two +1 cowlicks, local model z
+// source (-axis) and sink (+axis): two +1 cowlicks
 function seedSourceSink(){
   const axis=norm([0.32,0.86,0.40]);
-  for(let i=0;i<N;i++) dirs[i]=projT(V[i],axis);
+  for(let i=0;i<N;i++) setDir(i,projT(V[i],axis));
 }
-// single index +2 cowlick: holomorphic z^2 mapped through stereographic
-// projection; regular (combed) at the opposite pole.
+// a single +2 cowlick: z^2 through stereographic projection, smooth at the opposite pole
 function seedDouble(){
   const axis=norm([0.18,0.97,0.16]);
   const seed=Math.abs(axis[1])<0.9?[0,1,0]:[1,0,0];
   const u=norm(cross(axis,seed)), v=cross(axis,u);
   for(let i=0;i<N;i++){const p=V[i], a=dot(p,axis);
-    if(a>0.99995){dirs[i]=[0,0,0];continue;}             // the lone +2 knot
+    if(a>0.99995){setDir(i,[0,0,0]);continue;}             // the lone +2 knot
     const den=1+a, X=dot(p,u)/den, Y=dot(p,v)/den, wx=X*X-Y*Y, wy=2*X*Y; // w=z^2
     const apx=axis[0]+p[0],apy=axis[1]+p[1],apz=axis[2]+p[2];
     const e1=norm([u[0]-X*apx,u[1]-X*apy,u[2]-X*apz]);   // conformal tangent frame
     const e2=norm([v[0]-Y*apx,v[1]-Y*apy,v[2]-Y*apz]);
-    dirs[i]=projT(p,[wx*e1[0]+wy*e2[0],wx*e1[1]+wy*e2[1],wx*e1[2]+wy*e2[2]]);}
+    setDir(i,projT(p,[wx*e1[0]+wy*e2[0],wx*e1[1]+wy*e2[1],wx*e1[2]+wy*e2[2]]));}
 }
-// Hughes-Moller (1999): pick b2 _|_ n via a branch on |x| vs |z|, then b1 = b2 x n.
-// Real tangent-frame code; the branch leaves two +1 cowlicks on the |x|=|z| seam.
+// Hughes-Moller (1999): pick b2 perpendicular to n via a branch on |x| vs |z|, then b1 = b2 x n.
+// Real tangent-frame code; the branch leaves two seams and two +1 cowlicks.
 function seedHughesMoller(){
   for(let i=0;i<N;i++){const p=V[i];
     let b2 = Math.abs(p[0])>Math.abs(p[2]) ? [-p[1],p[0],0] : [0,-p[2],p[1]];
-    b2=norm(b2); dirs[i]=projT(p,cross(b2,p));}
+    b2=norm(b2); setDir(i,projT(p,cross(b2,p)));}
 }
-// Frisvad (2012): same frame without normalising. a=1/(1+z) blows up at z=-1, so
-// the special case there buries the whole defect in one +2 knot at that pole.
+// Frisvad (2012): the same without normalising. a=1/(1+z) blows up at z=-1, so
+// the special case there buries the whole defect in one +2 knot.
 function seedFrisvad(){
   for(let i=0;i<N;i++){const p=V[i], nz=p[2];
-    if(nz<-0.9999999){dirs[i]=projT(p,[0,-1,0]);continue;}
+    if(nz<-0.9999999){setDir(i,projT(p,[0,-1,0]));continue;}
     const a=1/(1+nz);
-    dirs[i]=projT(p,[1-p[0]*p[0]*a, -p[0]*p[1]*a, -p[0]]);}
+    setDir(i,projT(p,[1-p[0]*p[0]*a, -p[0]*p[1]*a, -p[0]]));}
 }
+
+// ===================================================================
+//  Field detection: the index of every face, then the cowlicks
+// ===================================================================
+const theta=new Float64Array(N), edgeD=new Float64Array(NE);
+let ORIENT=1;                       // +1 or -1, fixed below so that sources count +1
+function computeTheta(){
+  for(let i=0;i<N;i++){const d=dirs[i], o=i*3;
+    theta[i]=Math.atan2(d[0]*E2[o]+d[1]*E2[o+1]+d[2]*E2[o+2], d[0]*E1[o]+d[1]*E1[o+1]+d[2]*E1[o+2]);}
+}
+function faceIndices(cb){
+  computeTheta();
+  for(let e=0;e<NE;e++) edgeD[e]=wrap(theta[EB[e]]+ERHO[e]-theta[EA[e]]);
+  let total=0;
+  for(let f=0;f<NF;f++){const o=f*3;
+    const s=FS[o]*edgeD[FE[o]]+FS[o+1]*edgeD[FE[o+1]]+FS[o+2]*edgeD[FE[o+2]];
+    const k=ORIENT*Math.round(s/TAU);
+    if(k){ total+=k; if(cb) cb(f,k); }
+  }
+  return total;
+}
+let cowlicks=[], totalSwirl=2;
+function detect(){
+  const cl=[];
+  totalSwirl=faceIndices((f,k)=>{
+    const c=[faceC[f*3],faceC[f*3+1],faceC[f*3+2]];
+    for(const q of cl){ if(dot(q.c,c)>0.93){ q.s+=k; q.c=norm(add(mul(q.c,q.n),c)); q.n++; return; } }
+    cl.push({c,s:k,n:1});
+  });
+  cowlicks=cl.filter(q=>q.s!==0);
+}
+
+// ===================================================================
+//  Smoothing: gentle continuity. This is why cowlicks come back.
+// ===================================================================
+// Lower = a flattened patch holds longer before the cowlick creeps back in.
+const LAMBDA=0.022;
+const newTheta=new Float64Array(N);
+function smooth(){
+  computeTheta();
+  for(let i=0;i<N;i++){
+    let sx=0, sy=0;
+    for(let k=NB0[i];k<NB0[i+1];k++){const ph=theta[NBJ[k]]+NBR[k]; sx+=Math.cos(ph); sy+=Math.sin(ph);}
+    const L=Math.hypot(sx,sy); let th=theta[i];
+    if(L>1e-9){
+      const cx=Math.cos(th)*(1-LAMBDA)+sx/L*LAMBDA, cy=Math.sin(th)*(1-LAMBDA)+sy/L*LAMBDA;
+      if(cx*cx+cy*cy>1e-12) th=Math.atan2(cy,cx);
+    }
+    newTheta[i]=th;
+  }
+  for(let i=0;i<N;i++){const d=dirs[i], o=i*3, c=Math.cos(newTheta[i]), s=Math.sin(newTheta[i]);
+    d[0]=c*E1[o]+s*E2[o]; d[1]=c*E1[o+1]+s*E2[o+1]; d[2]=c*E1[o+2]+s*E2[o+2];}
+}
+
+// fix the sign convention once: a source-and-sink field has two +1 cowlicks
+seedSourceSink();
+ORIENT = faceIndices(null) < 0 ? -1 : 1;
 seedField();
 
 // ---------- three.js scene ----------
-const canvas=document.getElementById('c');
-const renderer=new THREE.WebGLRenderer({canvas,antialias:!small,alpha:false});
-renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+let renderer;
+try { renderer=new THREE.WebGLRenderer({canvas,antialias:!small,alpha:false}); }
+catch(e){ noGL(); return; }
 const scene=new THREE.Scene();
 scene.background=new THREE.Color(0x0b0c11);
 scene.fog=new THREE.Fog(0x0b0c11, 3.0, 6.2);
 
 const camera=new THREE.PerspectiveCamera(42,1,0.1,100);
-let camR=3.25, camTheta=0.5, camPhi=1.18;
+let camR=3.25, camRDefault=3.25, camRMax=5.5, userZoomed=false, camTheta=0.5, camPhi=1.18;
 function placeCamera(){
   camera.position.set(
     camR*Math.sin(camPhi)*Math.cos(camTheta),
     camR*Math.cos(camPhi),
     camR*Math.sin(camPhi)*Math.sin(camTheta));
   camera.lookAt(0,0,0);
+  hairsDirty=true;
 }
-placeCamera();
 
 // body (occludes far-side fur)
 const body=new THREE.Mesh(
@@ -324,114 +476,91 @@ const hairs=new THREE.LineSegments(segGeo,new THREE.LineBasicMaterial({
 scene.add(hairs);
 
 const LIGHT=norm([2,2.5,1.4]);
+let hairsDirty=true;
+function shade(o,x,y,z,vx,vy,vz){
+  let lit=0.45+0.55*Math.max(0,x*LIGHT[0]+y*LIGHT[1]+z*LIGHT[2]);
+  lit*=(0.30+0.70*Math.max(0,x*vx+y*vy+z*vz));       // dim the far rim
+  const r=lit*0.91+0.02, g=lit*0.85+0.02, b=lit*0.70+0.03; // warm fur
+  col[o]=r*0.55;col[o+1]=g*0.55;col[o+2]=b*0.55;            // root darker
+  col[o+3]=Math.min(1,r*1.18);col[o+4]=Math.min(1,g*1.18);col[o+5]=Math.min(1,b*1.18);
+}
 function refreshHairs(){
-  const viewDir=norm([camera.position.x,camera.position.y,camera.position.z]);
-  const lx=LIGHT[0],ly=LIGHT[1],lz=LIGHT[2], vx=viewDir[0],vy=viewDir[1],vz=viewDir[2];
+  const cp=camera.position, cl=Math.hypot(cp.x,cp.y,cp.z), vx=cp.x/cl, vy=cp.y/cl, vz=cp.z/cl;
   for(let i=0;i<N;i++){
-    const p=V[i], d=dirs[i], o=i*6;
-    pos[o]  =p[0]*Rroot; pos[o+1]=p[1]*Rroot; pos[o+2]=p[2]*Rroot;
-    pos[o+3]=p[0]*Rroot+d[0]*hairLen[i];
-    pos[o+4]=p[1]*Rroot+d[1]*hairLen[i];
-    pos[o+5]=p[2]*Rroot+d[2]*hairLen[i];
-    let lit=0.45+0.55*Math.max(0,p[0]*lx+p[1]*ly+p[2]*lz);
-    const facing=Math.max(0,p[0]*vx+p[1]*vy+p[2]*vz);
-    lit*= (0.30+0.70*facing);                 // dim the far rim
-    const r=lit*0.91+0.02, g=lit*0.85+0.02, b=lit*0.70+0.03; // warm fur
-    col[o]=r*0.55;col[o+1]=g*0.55;col[o+2]=b*0.55;            // root darker
-    col[o+3]=Math.min(1,r*1.18);col[o+4]=Math.min(1,g*1.18);col[o+5]=Math.min(1,b*1.18);
+    const p=V[i], d=dirs[i], o=i*6, h=hairLen[i];
+    pos[o]=p[0]*Rroot; pos[o+1]=p[1]*Rroot; pos[o+2]=p[2]*Rroot;
+    pos[o+3]=p[0]*Rroot+d[0]*h; pos[o+4]=p[1]*Rroot+d[1]*h; pos[o+5]=p[2]*Rroot+d[2]*h;
+    shade(o,p[0],p[1],p[2],vx,vy,vz);
   }
   for(let k=0;k<XN;k++){
-    const a=xA[k],b=xB[k],c=xC[k], da=dirs[a],db=dirs[b],dc=dirs[c];
-    const wa=xWA[k],wb=xWB[k],wc=xWC[k];
-    const bx=xBX[k],by=xBY[k],bz=xBZ[k];
-    let dx=da[0]*wa+db[0]*wb+dc[0]*wc;
-    let dy=da[1]*wa+db[1]*wb+dc[1]*wc;
-    let dz=da[2]*wa+db[2]*wb+dc[2]*wc;
+    const da=dirs[xA[k]],db=dirs[xB[k]],dc=dirs[xC[k]], w=k*3;
+    const wa=xW[w],wb=xW[w+1],wc=xW[w+2], bx=xP[w],by=xP[w+1],bz=xP[w+2];
+    let dx=da[0]*wa+db[0]*wb+dc[0]*wc, dy=da[1]*wa+db[1]*wb+dc[1]*wc, dz=da[2]*wa+db[2]*wb+dc[2]*wc;
     const dn=dx*bx+dy*by+dz*bz; dx-=dn*bx;dy-=dn*by;dz-=dn*bz;   // project to tangent
-    let L=Math.hypot(dx,dy,dz);
-    if(L>1e-5){const s=1/L;dx*=s;dy*=s;dz*=s;}
+    const L=Math.hypot(dx,dy,dz);
+    if(L>1e-5){dx/=L;dy/=L;dz/=L;}
     const grow=(0.18+0.82*Math.min(1,L*1.25))*xLEN[k];          // limp near cowlicks
     const o=(N+k)*6;
     pos[o]=bx;pos[o+1]=by;pos[o+2]=bz;
     pos[o+3]=bx+dx*grow;pos[o+4]=by+dy*grow;pos[o+5]=bz+dz*grow;
-    let lit=0.45+0.55*Math.max(0,bx*lx+by*ly+bz*lz);
-    const facing=Math.max(0,bx*vx+by*vy+bz*vz);
-    lit*= (0.30+0.70*facing);
-    const r=lit*0.91+0.02, g=lit*0.85+0.02, bb=lit*0.70+0.03;
-    col[o]=r*0.55;col[o+1]=g*0.55;col[o+2]=bb*0.55;
-    col[o+3]=Math.min(1,r*1.18);col[o+4]=Math.min(1,g*1.18);col[o+5]=Math.min(1,bb*1.18);
+    shade(o,bx,by,bz,vx,vy,vz);
   }
   segGeo.attributes.position.needsUpdate=true;
   segGeo.attributes.color.needsUpdate=true;
 }
 
-// cowlick marker sprites
-function emberTexture(){
-  const s=128,cv=document.createElement('canvas');cv.width=cv.height=s;
-  const g=cv.getContext('2d').createRadialGradient(s/2,s/2,0,s/2,s/2,s/2);
-  g.addColorStop(0,'rgba(255,234,200,1)');g.addColorStop(.18,'rgba(234,118,19,.95)');
-  g.addColorStop(.5,'rgba(165,8,46,.55)');g.addColorStop(1,'rgba(165,8,46,0)');
-  const ctx=cv.getContext('2d');ctx.fillStyle=g;ctx.fillRect(0,0,s,s);
-  const tx=new THREE.Texture(cv);tx.needsUpdate=true;return tx;
+// cowlick markers: warm glow for positive indices, cool for negative
+function glowTexture(stops){
+  const s=128, cv=document.createElement('canvas'); cv.width=cv.height=s;
+  const cx=cv.getContext('2d'), g=cx.createRadialGradient(s/2,s/2,0,s/2,s/2,s/2);
+  stops.forEach(st=>g.addColorStop(st[0],st[1]));
+  cx.fillStyle=g; cx.fillRect(0,0,s,s);
+  const tx=new THREE.Texture(cv); tx.needsUpdate=true; return tx;
 }
-const emberTex=emberTexture();
+const texPos=glowTexture([[0,'rgba(255,234,200,1)'],[.18,'rgba(234,118,19,.95)'],[.5,'rgba(165,8,46,.55)'],[1,'rgba(165,8,46,0)']]);
+const texNeg=glowTexture([[0,'rgba(255,255,255,1)'],[.18,'rgba(214,226,240,.9)'],[.5,'rgba(120,140,175,.45)'],[1,'rgba(120,140,175,0)']]);
 const markers=[];
 function getMarker(i){
   if(markers[i])return markers[i];
-  const m=new THREE.Sprite(new THREE.SpriteMaterial({map:emberTex,blending:THREE.AdditiveBlending,
+  const m=new THREE.Sprite(new THREE.SpriteMaterial({map:texPos,blending:THREE.AdditiveBlending,
     transparent:true,depthWrite:false,depthTest:false}));
   scene.add(m);markers[i]=m;return m;
 }
 
-// ===================================================================
-//  Field detection (cowlicks) — runs every few frames
-// ===================================================================
-let cowlicks=[], totalSwirl=2;
-function detect(){
-  const hits=[];
-  for(const f of F){const idx=faceIndex(f,dirs,V);
-    if(idx!==0){const c=norm(add(add(V[f[0]],V[f[1]]),V[f[2]]));hits.push({c,s:idx});}}
-  // greedy angular clustering
-  const cl=[];
-  for(const h of hits){let best=null;
-    for(const k of cl) if(dot(k.c,h.c)>0.93){best=k;break;}
-    if(best){best.s+=h.s;best.c=norm(add(mul(best.c,best.n),h.c));best.n++;}
-    else cl.push({c:h.c,s:h.s,n:1});}
-  cowlicks=cl.filter(k=>Math.abs(k.s)>=1);
-  totalSwirl=cl.reduce((a,k)=>a+k.s,0);
-}
-
-// ===================================================================
-//  Smoothing — gentle continuity. This is why cowlicks come back.
-// ===================================================================
-// Continuity rate. Lower = a flattened patch holds longer before the
-// cowlick creeps back in. Kept gentle so the singularity hunts slowly.
-const LAMBDA=0.022;
-const tmp=new Array(N);
-function smooth(){
-  for(let i=0;i<N;i++){
-    const nb=adj[i];let ax=0,ay=0,az=0;
-    for(const j of nb){const t=transport(dirs[j],V[j],V[i]);ax+=t[0];ay+=t[1];az+=t[2];}
-    const sm=projT(V[i],[ax,ay,az]);
-    const bl=projT(V[i],[dirs[i][0]*(1-LAMBDA)+sm[0]*LAMBDA,
-                         dirs[i][1]*(1-LAMBDA)+sm[1]*LAMBDA,
-                         dirs[i][2]*(1-LAMBDA)+sm[2]*LAMBDA]);
-    tmp[i]= len(bl)>0.5?bl:dirs[i];
-  }
-  for(let i=0;i<N;i++)dirs[i]=tmp[i];
+// index labels, plain text over the canvas
+const labelsEl=$('labels'), labelEls=[], projV=new THREE.Vector3();
+const signed=s=>(s>0?'+':'−')+Math.abs(s);
+function updateLabels(vd){
+  const w=view.clientWidth, h=view.clientHeight;
+  cowlicks.forEach((k,i)=>{
+    let el=labelEls[i];
+    if(!el){ el=document.createElement('span'); el.className='ix'; labelsEl.appendChild(el); labelEls[i]=el; }
+    const facing=dot(k.c,vd);
+    if(facing<0.2){ el.hidden=true; return; }
+    projV.set(k.c[0]*1.17,k.c[1]*1.17,k.c[2]*1.17).project(camera);
+    const x=(projV.x*0.5+0.5)*w, y=(-projV.y*0.5+0.5)*h;
+    el.hidden=false;
+    el.textContent=signed(k.s);
+    el.classList.toggle('neg',k.s<0);
+    el.style.transform='translate('+x.toFixed(1)+'px,'+y.toFixed(1)+'px) translate(-50%,-130%)';
+    el.style.opacity=Math.min(1,(facing-0.2)/0.25).toFixed(2);
+  });
+  for(let i=cowlicks.length;i<labelEls.length;i++) labelEls[i].hidden=true;
 }
 
 // ===================================================================
 //  Interaction
 // ===================================================================
 let mode='comb';                 // 'comb' | 'rotate'
-let lastHit=null, lastPointer=null, autoT=0;
+let lastHit=null, lastPointer=null, idleSince=0;
 let autoSpin=false;
 let relax=0;                     // smoothing budget; only combing tops it up
+let fieldDirty=true;
 const ray=new THREE.Raycaster();
 const ndc=new THREE.Vector2();
-const BRUSH=small?0.42:0.34, SIGMA=BRUSH*0.62, STR=0.55;
+const BRUSH=small?0.42:0.34, SIGMA=BRUSH*0.62, STR=0.55, COS_BRUSH=Math.cos(BRUSH);
 
+function fieldChanged(){ fieldDirty=true; hairsDirty=true; }
 function hitDir(ev){
   const r=canvas.getBoundingClientRect();
   ndc.x=((ev.clientX-r.left)/r.width)*2-1;
@@ -443,30 +572,28 @@ function hitDir(ev){
 function combAt(center,move){
   const m=projT(center,move); if(len(m)<1e-6)return;
   for(let i=0;i<N;i++){
-    const g=Math.acos(Math.max(-1,Math.min(1,dot(V[i],center))));
-    if(g>BRUSH)continue;
-    const w=Math.exp(-(g*g)/(SIGMA*SIGMA))*STR;
-    const tgt=projT(V[i],m); if(len(tgt)<0.5)continue;
-    const a=Math.min(0.9,w);
-    dirs[i]=projT(V[i],[dirs[i][0]*(1-a)+tgt[0]*a,
-                        dirs[i][1]*(1-a)+tgt[1]*a,
-                        dirs[i][2]*(1-a)+tgt[2]*a]);
+    const p=V[i], c=p[0]*center[0]+p[1]*center[1]+p[2]*center[2];
+    if(c<COS_BRUSH)continue;
+    const g=Math.acos(Math.min(1,c));
+    const a=Math.min(0.9,Math.exp(-(g*g)/(SIGMA*SIGMA))*STR);
+    const tgt=projT(p,m); if(len(tgt)<0.5)continue;
+    const d=dirs[i];
+    setDir(i,projT(p,[d[0]*(1-a)+tgt[0]*a, d[1]*(1-a)+tgt[1]*a, d[2]*(1-a)+tgt[2]*a]));
   }
-  touched=true; relax=14;
+  touched=true; relax=14; fieldChanged();
 }
 
 let touched=false;
-// multi-pointer gesture handling: 1 finger combs (or orbits in rotate mode),
-// 2 fingers pinch-zoom and turn the creature. Desktop keeps wheel + drag.
+// 1 finger combs (or orbits in rotate mode), 2 fingers pinch-zoom and turn the creature.
 const ptrs=new Map();
 let gesture=null, pinchD0=0, camR0=camR, gMid=null;
-const PI=Math.PI;
+function zoomTo(r){ camR=clamp(r,2.1,camRMax); userZoomed=true; placeCamera(); }
 
 canvas.addEventListener('contextmenu',e=>e.preventDefault());
 canvas.addEventListener('pointerdown',ev=>{
-  canvas.setPointerCapture(ev.pointerId);
+  try{canvas.setPointerCapture(ev.pointerId);}catch(e){}
   ptrs.set(ev.pointerId,{x:ev.clientX,y:ev.clientY});
-  autoT=0;
+  idleSince=performance.now();
   if(ptrs.size===1){
     if(mode==='rotate'||ev.button===2){gesture='orbit';lastPointer=[ev.clientX,ev.clientY];}
     else{gesture='comb';lastHit=hitDir(ev);}
@@ -480,6 +607,7 @@ canvas.addEventListener('pointerdown',ev=>{
 canvas.addEventListener('pointermove',ev=>{
   if(!ptrs.has(ev.pointerId))return;
   ptrs.set(ev.pointerId,{x:ev.clientX,y:ev.clientY});
+  idleSince=performance.now();
   if(gesture==='comb'){
     const h=hitDir(ev);
     if(h&&lastHit){const move=sub(h,lastHit);const ctr=norm(add(h,lastHit));combAt(ctr,move);}
@@ -491,7 +619,7 @@ canvas.addEventListener('pointermove',ev=>{
   }else if(gesture==='pinch'){
     const [a,b]=[...ptrs.values()];
     const d=Math.hypot(a.x-b.x,a.y-b.y);
-    if(pinchD0>0&&d>0) camR=clamp(camR0*(pinchD0/d),2.1,5.5);
+    if(pinchD0>0&&d>0){ camR=clamp(camR0*(pinchD0/d),2.1,camRMax); userZoomed=true; }
     const mid=[(a.x+b.x)/2,(a.y+b.y)/2];
     if(gMid){camTheta-=(mid[0]-gMid[0])*0.005; camPhi=clamp(camPhi-(mid[1]-gMid[1])*0.005,0.18,PI-0.18);}
     gMid=mid; placeCamera();
@@ -509,163 +637,86 @@ function dropPtr(ev){
 }
 canvas.addEventListener('pointerup',dropPtr);
 canvas.addEventListener('pointercancel',dropPtr);
-canvas.addEventListener('wheel',ev=>{ev.preventDefault();
-  camR=clamp(camR+ev.deltaY*0.0016,2.1,5.5);placeCamera();},{passive:false});
-
-// buttons
-const $=id=>document.getElementById(id);
-
-// ===================================================================
-//  Language layer (Catalan default for El Gegant del pi; English toggle)
-// ===================================================================
-const I18N={
-  ca:{
-    title:"Pentina l'eriço",
-    intro:"Arrossega pel pel per aplanar-lo. En algun lloc sempre sobreviura un remoli. Es un teorema, no pas un nivell de dificultat.",
-    swirlLabel:"REMOLI TOTAL",
-    cowlicksLabel:"remolins",
-    whyToggle:"d'on surt el +2?",
-    whyText:"El +2 es la caracteristica d'Euler de l'esfera: depen nomes de la forma, no de com pentinis. El teorema de Poincare-Hopf obliga els remolins a sumar-lo sempre, aixi que mai no els pots eliminar tots.",
-    btnRotate:"Gira la vista", btnComb:"Pentina",
-    btnSweep:"Pentina recte", btnReset:"Pel nou",
-    hintComb:"Consell: busca un remoli ences i pentina-hi just per sobre. Mira on s'escapa.",
-    hintRotate:"Arrossega per girar la bestiola. Torna a pentinar per continuar lluitant.",
-    st_start:"Pentina'l ben pla. No te'n sortiras.",
-    st_reset:"Pel nou. Dos remolins, com sempre.",
-    st_sweep:"Pentinat tot cap a un costat. Tot el remoli s'amuntega als pols.",
-    st_one:"L'has reduit a un sol remoli. No pot baixar mes.",
-    st_two:"Dos remolins. Tapa'n un i l'altre se l'empassa.",
-    st_many:n=>"Has partit el remoli en "+n+" nusos. Tot i aixi sumen +2.",
-    presetsTitle:"Pentinats canonics",
-    pLabelPoles:"Pol a pol", pLabelSwirl:"Doble gir", pLabelDouble:"Remoli doble",
-    st_p_poles:"Font i desguas: el pel va de pol a pol. Dos remolins de +1, com z a prop de cadascun.",
-    st_p_swirl:"Dos vortexs que giren, +1 cadascun. A prop dels pols el camp es com iz, un z girat 90 graus.",
-    st_p_double:"Tot el gir concentrat en un sol nus d'index +2, com z2. La resta queda llisa.",
-    btnAuto:"Gir automatic", presetsTitle2:"Del codi de grafics",
-    st_p_hm:"Hughes-Moller (1999): construeix un marc tangent des de la normal. La branca |x|>|z| deixa dues costures, dos remolins de +1.",
-    st_p_frisvad:"Frisvad (2012): el mateix sense normalitzar. El cas especial z<-1 amaga tot el defecte en un sol nus de +2 al pol."
-  },
-  en:{
-    title:"Comb the Hedgehog",
-    intro:"Drag across the fur to flatten it. Somewhere a cowlick will always survive. It's a theorem, not a difficulty setting.",
-    swirlLabel:"TOTAL SWIRL",
-    cowlicksLabel:"cowlicks",
-    whyToggle:"where's the +2 from?",
-    whyText:"The +2 is the Euler characteristic of the sphere: it depends only on the shape, not on how you comb. The Poincaré–Hopf theorem forces the cowlicks to add up to it, so you can never clear them all.",
-    btnRotate:"Rotate view", btnComb:"Comb fur",
-    btnSweep:"Comb one way", btnReset:"Reset fur",
-    hintComb:"Tip: hunt a glowing cowlick and comb straight over it. Watch where it runs.",
-    hintRotate:"Drag to turn the creature. Switch back to comb to keep fighting.",
-    st_start:"Comb it flat. You won't manage it.",
-    st_reset:"Fresh fur. Two cowlicks, like always.",
-    st_sweep:"Combed flat one way. The whole swirl piles into the poles.",
-    st_one:"Down to a single cowlick. It can't go lower.",
-    st_two:"Two cowlicks. Close one and the other swallows it.",
-    st_many:n=>"You split the swirl into "+n+" knots. They still add up to +2.",
-    presetsTitle:"Canonical combings",
-    pLabelPoles:"Pole to pole", pLabelSwirl:"Double swirl", pLabelDouble:"Double cowlick",
-    st_p_poles:"Source and sink: fur runs pole to pole. Two +1 cowlicks, like z near each.",
-    st_p_swirl:"Two turning vortices, +1 each. Near the poles the field is like iz, a z turned 90\u00b0.",
-    st_p_double:"All the turning in one knot of index +2, like z\u00b2. The rest combs flat.",
-    btnAuto:"Auto-rotate", presetsTitle2:"From graphics code",
-    st_p_hm:"Hughes\u2013M\u00f6ller (1999): builds a tangent frame from the normal. Its |x|>|z| branch leaves two seams, two +1 cowlicks.",
-    st_p_frisvad:"Frisvad (2012): the same without normalising. Its z<-1 special case hides the whole defect in one +2 knot at the pole."
-  }
-};
-// Catalan needs accents that bare ASCII can't carry; restore them here so the
-// source stays clean and the rendered copy is correct for the blog.
-Object.assign(I18N.ca,{
-  title:"Pentina l\u2019eri\u00e7\u00f3",
-  intro:"Arrossega pel p\u00e8l per aplanar-lo. En algun lloc sempre sobreviur\u00e0 un remol\u00ed. \u00c9s un teorema, no pas un nivell de dificultat.",
-  swirlLabel:"REMOL\u00cd TOTAL",
-  whyToggle:"d\u2019on surt el +2?",
-  whyText:"El +2 \u00e9s la caracter\u00edstica d\u2019Euler de l\u2019esfera: dep\u00e8n nom\u00e9s de la forma, no de com pentinis. El teorema de Poincar\u00e9\u2013Hopf obliga els remolins a sumar-lo sempre, aix\u00ed que mai no els pots eliminar tots.",
-  btnReset:"P\u00e8l nou",
-  hintComb:"Consell: busca un remol\u00ed enc\u00e8s i pentina-hi just per sobre. Mira on s\u2019escapa.",
-  st_start:"Pentina\u2019l ben pla. No te\u2019n sortir\u00e0s.",
-  st_reset:"P\u00e8l nou. Dos remolins, com sempre.",
-  st_sweep:"Pentinat tot cap a un costat. Tot el remol\u00ed s\u2019amuntega als pols.",
-  st_one:"L\u2019has redu\u00eft a un sol remol\u00ed. No pot baixar m\u00e9s.",
-  st_two:"Dos remolins. Tapa\u2019n un i l\u2019altre se l\u2019empassa.",
-  st_many:n=>"Has partit el remol\u00ed en "+n+" nusos. Tot i aix\u00ed sumen +2.",
-  presetsTitle:"Pentinats can\u00f2nics",
-  pLabelDouble:"Remol\u00ed doble",
-  st_p_poles:"Font i desgu\u00e0s: el p\u00e8l va de pol a pol. Dos remolins de +1, com z a prop de cadascun.",
-  st_p_swirl:"Dos v\u00f2rtexs que giren, +1 cadascun. A prop dels pols el camp \u00e9s com iz, un z girat 90\u00b0.",
-  st_p_double:"Tot el gir concentrat en un sol nus d\u2019\u00edndex +2, com z\u00b2. La resta queda llisa.",
-  btnAuto:"Gir autom\u00e0tic", presetsTitle2:"Del codi de gr\u00e0fics",
-  st_p_hm:"Hughes\u2013M\u00f6ller (1999): construeix un marc tangent des de la normal. La branca |x|>|z| deixa dues costures, dos remolins de +1.",
-  st_p_frisvad:"Frisvad (2012): el mateix sense normalitzar. El cas especial z<-1 amaga tot el defecte en un sol nus de +2 al pol."
+// the wheel scrolls the page; Ctrl + wheel (or a trackpad pinch) zooms
+canvas.addEventListener('wheel',ev=>{
+  if(!ev.ctrlKey)return;
+  ev.preventDefault(); zoomTo(camR*Math.exp(ev.deltaY*0.002));
+},{passive:false});
+canvas.addEventListener('keydown',ev=>{
+  let used=true;
+  if(ev.key==='ArrowLeft')camTheta+=0.12;
+  else if(ev.key==='ArrowRight')camTheta-=0.12;
+  else if(ev.key==='ArrowUp')camPhi=clamp(camPhi-0.12,0.18,PI-0.18);
+  else if(ev.key==='ArrowDown')camPhi=clamp(camPhi+0.12,0.18,PI-0.18);
+  else if(ev.key==='+'||ev.key==='='){zoomTo(camR*0.88);}
+  else if(ev.key==='-'||ev.key==='_'){zoomTo(camR/0.88);}
+  else used=false;
+  if(used){ev.preventDefault(); placeCamera(); idleSince=performance.now();}
 });
+$('zin').addEventListener('click',()=>zoomTo(camR*0.85));
+$('zout').addEventListener('click',()=>zoomTo(camR/0.85));
 
-let lang='ca';
+// ===================================================================
+//  Words (Catalan)
+// ===================================================================
+const T={
+  btnRotate:"Gira la vista", btnComb:"Pentina",
+  hintComb:"Arrossega per pentinar. Per girar l’eriçó, fes servir el botó dret, dos dits o «Gira la vista». Busca un remolí encès i pentina-hi just per sobre, a veure on s’escapa.",
+  hintRotate:"Arrossega per girar l’eriçó. Torna a «Pentina» per continuar la lluita.",
+  start:"Pentina’l ben pla. No te’n sortiràs.",
+  reset:"Pèl nou. Dos remolins, com sempre.",
+  sweep:"Pentinat tot cap a un costat. Tot el remolí s’amuntega als pols.",
+  one:"L’has reduït a un sol remolí, de +2. No pot baixar més.",
+  two:"Dos remolins. Tapa’n un i l’altre se l’empassa.",
+  many:n=>"Has partit el remolí en "+n+" nusos. Tot i així sumen +2.",
+  p_poles:"Font i embornal. El pèl surt per un punt i entra per l’oposat, amb dos remolins de +1.",
+  p_swirl:"Dos vòrtexs que giren com l’aigua d’una pica, de +1 cadascun.",
+  p_double:"Tot el gir concentrat en un sol nus d’índex +2. La resta queda llisa.",
+  p_hm:"Hughes i Möller (1999), una recepta dels programes de gràfics 3D. Canvia de fórmula a mig camí, i el pèl salta de cop al llarg de dues costures. Hi surten dos remolins de +1.",
+  p_frisvad:"Frisvad (2012), una recepta més ràpida per al mateix. Es trenca en un sol punt, on z = −1, i el cas especial que la tapa hi amaga tot el defecte, un nus de +2."
+};
+
 let statusKey='start', statusN=0, lastCount=-1, statusLock=0;
-
 function renderStatus(){
-  const T=I18N[lang];
-  const map={start:T.st_start,reset:T.st_reset,sweep:T.st_sweep,
-             one:T.st_one,two:T.st_two,many:T.st_many(statusN),
-             p_poles:T.st_p_poles,p_swirl:T.st_p_swirl,p_double:T.st_p_double,
-             p_hm:T.st_p_hm,p_frisvad:T.st_p_frisvad};
-  $('status').textContent=map[statusKey]||"";
+  const v=statusKey==='many'?T.many(statusN):T[statusKey];
+  $('status').textContent=v||"";
 }
-function setStatus(key,n,lock){statusKey=key;if(n!=null)statusN=n;renderStatus();if(lock)statusLock=lock;}
+function setStatus(k,n,lock){statusKey=k;if(n!=null)statusN=n;renderStatus();if(lock)statusLock=lock;}
 function refreshModeUI(){
-  const T=I18N[lang];
   $('mode').textContent = mode==='rotate'?T.btnComb:T.btnRotate;
+  $('mode').setAttribute('aria-pressed',mode==='rotate'?'true':'false');
   $('hint').textContent = mode==='rotate'?T.hintRotate:T.hintComb;
+  canvas.classList.toggle('rotating',mode==='rotate');
 }
-function applyStatic(){
-  const T=I18N[lang];
-  document.documentElement.lang=lang;
-  $('title').textContent=T.title;
-  $('intro').textContent=T.intro;
-  $('sweep').textContent=T.btnSweep;
-  $('reset').textContent=T.btnReset;
-  $('ptitle').textContent=T.presetsTitle;
-  $('pl_poles').textContent=T.pLabelPoles;
-  $('pl_swirl').textContent=T.pLabelSwirl;
-  $('pl_double').textContent=T.pLabelDouble;
-  $('auto').textContent=T.btnAuto;
-  $('ptitle2').textContent=T.presetsTitle2;
-  $('whyBtn').innerHTML=T.whyToggle+'<span class="car">\u203a</span>';
-  $('why').textContent=T.whyText;
-  document.querySelectorAll('#lang button').forEach(b=>b.classList.toggle('on',b.dataset.l===lang));
-  refreshModeUI(); renderStatus(); syncUI();
-}
-document.querySelectorAll('#lang button').forEach(b=>
-  b.addEventListener('click',()=>{lang=b.dataset.l;applyStatic();}));
 
 $('whyBtn').addEventListener('click',()=>{
   const open=$('why').hasAttribute('hidden');
   $('why').toggleAttribute('hidden',!open);
   $('whyBtn').setAttribute('aria-expanded',open?'true':'false');
 });
-
 $('mode').addEventListener('click',()=>{
   mode=mode==='comb'?'rotate':'comb';
-  $('mode').setAttribute('aria-pressed',mode==='rotate');
   refreshModeUI();
 });
 $('auto').addEventListener('click',()=>{
   autoSpin=!autoSpin;
-  $('auto').setAttribute('aria-pressed',autoSpin);
+  $('auto').setAttribute('aria-pressed',autoSpin?'true':'false');
 });
-$('reset').addEventListener('click',()=>{seedField();touched=false;autoT=0;lastCount=-1;setStatus('reset',null,30);});
+$('reset').addEventListener('click',()=>{seedField();fieldChanged();touched=false;lastCount=-1;setStatus('reset',null,30);});
 $('sweep').addEventListener('click',()=>{           // comb everything one way -> fountain
   const axis=norm([0.1,1,0.05]);
-  for(let i=0;i<N;i++){const t=projT(V[i],cross(axis,V[i]));if(len(t)>0.3)dirs[i]=t;}
+  for(let i=0;i<N;i++){const t=projT(V[i],cross(axis,V[i]));if(len(t)>0.3)setDir(i,t);}
   // then bias strongly toward one pole to dramatise the swirl piling up
-  for(let i=0;i<N;i++){const tgt=projT(V[i],[0,-1,0]);if(len(tgt)>0.4)
-    dirs[i]=projT(V[i],[dirs[i][0]*0.25+tgt[0]*0.75,dirs[i][1]*0.25+tgt[1]*0.75,dirs[i][2]*0.25+tgt[2]*0.75]);}
-  touched=true;autoT=0;lastCount=-1;setStatus('sweep',null,30);relax=14;
+  for(let i=0;i<N;i++){const tgt=projT(V[i],[0,-1,0]);if(len(tgt)>0.4){const d=dirs[i];
+    setDir(i,projT(V[i],[d[0]*0.25+tgt[0]*0.75,d[1]*0.25+tgt[1]*0.75,d[2]*0.25+tgt[2]*0.75]));}}
+  touched=true;lastCount=-1;setStatus('sweep',null,30);relax=14;fieldChanged();
 });
 
 // canonical combings: each is a legal field whose indices still total +2
-function faceCowlick(){               // turn the view toward the first defect
-  detect(); if(!cowlicks.length) return;
+function faceCowlick(){               // turn the view toward the first defect, a little above centre
+  detect(); fieldDirty=false; if(!cowlicks.length) return;
   const c=cowlicks[0].c;
-  camPhi=clamp(Math.acos(clamp(c[1],-1,1)),0.18,PI-0.18);
+  camPhi=clamp(Math.acos(clamp(c[1],-1,1))+0.22,0.18,PI-0.18);
   camTheta=Math.atan2(c[2],c[0]); placeCamera();
 }
 function applyPreset(name){
@@ -674,14 +725,14 @@ function applyPreset(name){
   else if(name==='hm')seedHughesMoller();
   else if(name==='frisvad')seedFrisvad();
   else seedField();                          // 'swirl' = the default double vortex
-  touched=true;autoT=0;lastCount=-1;setStatus('p_'+name,null,90);
-  faceCowlick();
+  fieldChanged(); touched=true; lastCount=-1; setStatus('p_'+name,null,90);
+  faceCowlick(); syncUI();
 }
 document.querySelectorAll('.prow button').forEach(b=>
   b.addEventListener('click',()=>applyPreset(b.dataset.preset)));
 
 // ===================================================================
-//  Status copy reacts to cowlick count
+//  Status copy reacts to the cowlick count
 // ===================================================================
 function updateStatus(){
   if(statusLock>0){statusLock--;return;}
@@ -692,44 +743,65 @@ function updateStatus(){
   else if(n===2) setStatus('two');
   else setStatus('many',n);
 }
+function syncUI(){
+  $('swirl').textContent=(totalSwirl>=0?'+':'−')+Math.abs(totalSwirl);
+  const list=cowlicks.map(k=>k.s).sort((a,b)=>b-a).map(signed).join(' ');
+  $('sub').textContent='remolins: '+cowlicks.length+(cowlicks.length?' ('+list+')':'');
+}
 
 // ===================================================================
-//  Loop
+//  Loop: only redo the work that changed
 // ===================================================================
-function syncUI(){
-  const T=I18N[lang];
-  $('swirl').innerHTML=(totalSwirl>=0?'+':'')+totalSwirl+'<small>&nbsp;'+T.swirlLabel+'</small>';
-  $('sub').textContent=T.cowlicksLabel+': '+cowlicks.length;
-}
-let frame=0;
+let frame=0, onScreen=true;
+function viewDir(){ const p=camera.position, l=Math.hypot(p.x,p.y,p.z); return [p.x/l,p.y/l,p.z/l]; }
 function loop(){
   requestAnimationFrame(loop);
+  if(!onScreen||document.hidden)return;
   frame++;
   if(autoSpin && ptrs.size===0){ camTheta+=0.0016; placeCamera(); }
-  if(relax>0){ smooth(); relax--; }
-  if(frame%6===0){ detect(); syncUI(); updateStatus(); }
-  // markers — fade the ones that have run to the far side
+  if(relax>0){ smooth(); relax--; fieldChanged(); }
+  if(fieldDirty && frame%3===0){ detect(); fieldDirty=false; syncUI(); }
+  if(statusLock>0 || touched){ if(frame%6===0) updateStatus(); }
+  const busy = hairsDirty || relax>0 || ptrs.size>0 || autoSpin || performance.now()-idleSince<1500;
+  if(!busy && (reduce || frame%2===1))return;   // idle: half the frame rate, or none with reduced motion
+  if(hairsDirty){ refreshHairs(); hairsDirty=false; }
   for(let i=0;i<markers.length;i++) if(markers[i]) markers[i].visible=false;
-  const pulse=1+0.16*Math.sin(frame*0.12);
-  const vd=norm([camera.position.x,camera.position.y,camera.position.z]);
+  const pulse=reduce?1:1+0.16*Math.sin(frame*0.12);
+  const vd=viewDir();
   cowlicks.forEach((k,i)=>{
-    const m=getMarker(i);m.visible=true;
-    const s=(0.34+0.12*Math.abs(k.s))*pulse;m.scale.set(s,s,s);
+    const m=getMarker(i); m.visible=true;
+    m.material.map=k.s<0?texNeg:texPos;
+    const s=(0.34+0.12*Math.abs(k.s))*pulse; m.scale.set(s,s,s);
     m.position.set(k.c[0]*1.05,k.c[1]*1.05,k.c[2]*1.05);
-    const face=clamp((dot(k.c,vd)+0.35)/1.1,0,1);   // 1 front, ~0.12 behind
-    m.material.opacity=0.14+0.86*face;
+    m.material.opacity=0.14+0.86*clamp((dot(k.c,vd)+0.35)/1.1,0,1);   // 1 in front, ~0.12 behind
   });
-  refreshHairs();
   renderer.render(scene,camera);
+  updateLabels(vd);
 }
 
-function resize(){
-  const w=innerWidth,h=innerHeight;
-  renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();
+function pixelRatioFor(w,h){
+  let r=Math.min(devicePixelRatio||1,2);
+  while(r>1 && w*h*r*r>2.6e6) r-=0.25;      // keep big screens light
+  return r;
 }
-addEventListener('resize',resize);
+function resize(){
+  const w=view.clientWidth, h=view.clientHeight;
+  if(!w||!h)return;
+  renderer.setPixelRatio(pixelRatioFor(w,h));
+  renderer.setSize(w,h,false);
+  camera.aspect=w/h; camera.updateProjectionMatrix();
+  const half=21*PI/180, hh=Math.atan(Math.tan(half)*camera.aspect);
+  camRDefault=Math.max(3.25,1.12/Math.sin(Math.min(half,hh))*1.04);
+  camRMax=Math.max(5.5,camRDefault*1.6);
+  if(!userZoomed) camR=camRDefault;
+  placeCamera();
+}
+if(window.ResizeObserver) new ResizeObserver(resize).observe(view);
+else addEventListener('resize',resize);
+if(window.IntersectionObserver) new IntersectionObserver(es=>{ onScreen=es[0].isIntersecting; }).observe(view);
 resize();
-detect();applyStatic();
+refreshModeUI();
+faceCowlick(); syncUI(); renderStatus();
 loop();
 
 })();
